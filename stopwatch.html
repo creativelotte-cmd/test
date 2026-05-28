@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>멍멍 스탑워치</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #fff8f0;
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* ── 강아지 얼굴 ── */
+    .dog-wrap {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto 10px;
+    }
+
+    /* 귀 */
+    .ear {
+      position: absolute;
+      width: 90px;
+      height: 110px;
+      background: #c8854a;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      top: 10px;
+      z-index: 0;
+    }
+    .ear.left  { left: 18px;  transform: rotate(-12deg); }
+    .ear.right { right: 18px; transform: rotate(12deg); }
+
+    /* 얼굴 */
+    .face {
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      background: #f0c080;
+      border-radius: 50%;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    /* 눈 */
+    .eyes {
+      position: absolute;
+      top: 78px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 52px;
+    }
+    .eye {
+      width: 28px;
+      height: 28px;
+      background: #2a1a0e;
+      border-radius: 50%;
+      position: relative;
+    }
+    .eye::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      top: 4px;
+      left: 5px;
+    }
+
+    /* 코 */
+    .nose {
+      position: absolute;
+      top: 124px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 26px;
+      background: #2a1a0e;
+      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+    }
+
+    /* 입 */
+    .mouth {
+      position: absolute;
+      top: 152px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 30px;
+    }
+    .mouth svg { width: 100%; height: 100%; }
+
+    /* 볼터치 */
+    .cheek {
+      position: absolute;
+      width: 44px;
+      height: 22px;
+      background: rgba(255, 160, 120, 0.45);
+      border-radius: 50%;
+      top: 140px;
+    }
+    .cheek.left  { left: 28px; }
+    .cheek.right { right: 28px; }
+
+    /* 꼬리 — 타이머 동작 중 흔들림 */
+    .tail {
+      position: absolute;
+      bottom: -10px;
+      right: 20px;
+      width: 18px;
+      height: 70px;
+      background: #c8854a;
+      border-radius: 9px 9px 0 0;
+      transform-origin: bottom center;
+      transform: rotate(20deg);
+      z-index: 0;
+    }
+    .running-anim .tail {
+      animation: wag 0.4s ease-in-out infinite alternate;
+    }
+    @keyframes wag {
+      from { transform: rotate(20deg); }
+      to   { transform: rotate(-20deg); }
+    }
+
+    /* 눈 깜빡임 */
+    @keyframes blink {
+      0%, 92%, 100% { transform: scaleY(1); }
+      96%           { transform: scaleY(0.08); }
+    }
+    .eye { animation: blink 4s infinite; }
+    .eye:nth-child(2) { animation-delay: 0.05s; }
+
+    /* ── 시간 표시 ── */
+    .display {
+      font-size: 64px;
+      font-weight: bold;
+      color: #5a3a1a;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+    .ms-wrap { font-size: 32px; color: #a07040; }
+
+    /* ── 버튼 ── */
+    .buttons {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin: 24px 0 28px;
+    }
+
+    button {
+      padding: 13px 30px;
+      font-size: 16px;
+      font-family: inherit;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      font-weight: bold;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    }
+    button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.15); }
+
+    #startStop {
+      background: #ff8c42;
+      color: white;
+      min-width: 120px;
+    }
+    #startStop.running { background: #e05a2b; }
+
+    #lap {
+      background: #6bc47a;
+      color: white;
+    }
+    #lap:disabled { background: #ccc; cursor: default; }
+    #lap:disabled:active { transform: none; box-shadow: 0 4px 0 rgba(0,0,0,0.15); }
+
+    #reset {
+      background: #b0b0b0;
+      color: white;
+    }
+
+    /* ── 랩 목록 ── */
+    .laps {
+      max-height: 240px;
+      overflow-y: auto;
+      width: 340px;
+      margin: 0 auto;
+      border-radius: 16px;
+      background: #fff3e8;
+    }
+    .laps::-webkit-scrollbar { width: 4px; }
+    .laps::-webkit-scrollbar-thumb { background: #e0b080; border-radius: 2px; }
+
+    .lap-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 18px;
+      color: #5a3a1a;
+      border-bottom: 1px solid #f0d8c0;
+      font-size: 14px;
+    }
+    .lap-item:last-child { border-bottom: none; }
+    .lap-item .lap-num { color: #b08050; font-size: 12px; }
+    .lap-item .lap-split { color: #a07040; font-size: 12px; }
+    .lap-item.best  .lap-total { color: #3a9a50; font-weight: bold; }
+    .lap-item.worst .lap-total { color: #d04030; font-weight: bold; }
+
+    .paw { font-size: 11px; margin-right: 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 강아지 얼굴 -->
+  <div class="dog-wrap" id="dogWrap">
+    <div class="ear left"></div>
+    <div class="ear right"></div>
+    <div class="tail"></div>
+    <div class="face">
+      <div class="eyes">
+        <div class="eye"></div>
+        <div class="eye"></div>
+      </div>
+      <div class="nose"></div>
+      <div class="mouth">
+        <svg viewBox="0 0 60 30" fill="none">
+          <path d="M 10 5 Q 30 28 50 5" stroke="#2a1a0e" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          <path d="M 30 18 Q 30 28 30 28" stroke="#2a1a0e" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="cheek left"></div>
+      <div class="cheek right"></div>
+    </div>
+  </div>
+
+  <!-- 시간 표시 -->
+  <div class="display">
+    <span id="time">00:00</span><span class="ms-wrap">.<span id="ms">00</span></span>
+  </div>
+
+  <!-- 버튼 -->
+  <div class="buttons">
+    <button id="startStop">🐾 시작</button>
+    <button id="lap" disabled>랩</button>
+    <button id="reset">초기화</button>
+  </div>
+
+  <!-- 랩 목록 -->
+  <div class="laps" id="laps"></div>
+</div>
+
+<script>
+  let startTime = 0, elapsed = 0, raf = null;
+  let running = false;
+  let lapStart = 0, laps = [];
+
+  const timeEl      = document.getElementById('time');
+  const msEl        = document.getElementById('ms');
+  const lapsEl      = document.getElementById('laps');
+  const startStopBtn = document.getElementById('startStop');
+  const lapBtn      = document.getElementById('lap');
+  const dogWrap     = document.getElementById('dogWrap');
+
+  function format(ms) {
+    const total = Math.floor(ms / 10);
+    const cents = total % 100;
+    const secs  = Math.floor(total / 100) % 60;
+    const mins  = Math.floor(total / 6000);
+    return {
+      main: `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`,
+      ms:   String(cents).padStart(2,'0')
+    };
+  }
+
+  function tick() {
+    elapsed = Date.now() - startTime;
+    const f = format(elapsed);
+    timeEl.textContent = f.main;
+    msEl.textContent   = f.ms;
+    raf = requestAnimationFrame(tick);
+  }
+
+  startStopBtn.addEventListener('click', () => {
+    if (!running) {
+      startTime = Date.now() - elapsed;
+      if (laps.length === 0) lapStart = startTime;
+      running = true;
+      startStopBtn.textContent = '⏸ 정지';
+      startStopBtn.classList.add('running');
+      lapBtn.disabled = false;
+      dogWrap.classList.add('running-anim');
+      raf = requestAnimationFrame(tick);
+    } else {
+      cancelAnimationFrame(raf);
+      running = false;
+      startStopBtn.textContent = '▶ 계속';
+      startStopBtn.classList.remove('running');
+      lapBtn.disabled = true;
+      dogWrap.classList.remove('running-anim');
+    }
+  });
+
+  lapBtn.addEventListener('click', () => {
+    const now   = Date.now();
+    const split = now - lapStart;
+    lapStart = now;
+    laps.unshift({ total: elapsed, split });
+    renderLaps();
+  });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    cancelAnimationFrame(raf);
+    running = false; elapsed = 0; laps = [];
+    startStopBtn.textContent = '🐾 시작';
+    startStopBtn.classList.remove('running');
+    lapBtn.disabled = true;
+    dogWrap.classList.remove('running-anim');
+    timeEl.textContent = '00:00';
+    msEl.textContent   = '00';
+    lapsEl.innerHTML   = '';
+  });
+
+  function renderLaps() {
+    const splits = laps.map(l => l.split);
+    const best   = laps.length >= 2 ? Math.min(...splits) : null;
+    const worst  = laps.length >= 2 ? Math.max(...splits) : null;
+    lapsEl.innerHTML = '';
+    laps.forEach((lap, i) => {
+      const num = laps.length - i;
+      const cls = best !== null && lap.split === best  ? 'best'
+                : best !== null && lap.split === worst ? 'worst' : '';
+      const ft  = format(lap.total);
+      const fs  = format(lap.split);
+      const div = document.createElement('div');
+      div.className = `lap-item ${cls}`;
+      div.innerHTML = `
+        <span class="lap-num"><span class="paw">🐾</span>랩 ${num}</span>
+        <span class="lap-split">${fs.main}.${fs.ms}</span>
+        <span class="lap-total">${ft.main}.${ft.ms}</span>`;
+      lapsEl.appendChild(div);
+    });
+  }
+</script>
+</body>
+</html>

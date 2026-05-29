@@ -7,9 +7,10 @@
 <style>
 /* ══════════════════════════════════════════════════════
    Base & LoL Theme
-   Black  (네이버 개발자) : 저장·로직 담당 색상
-   White  (카카오 기획자) : 기획·흐름 담당 색상
-   Yellow (대학 교수)     : 구조·교육 담당 색상
+   최제식 : 파랑
+   이동욱 : 초록
+   박대선 : 빨강
+   마성호 : 보라
 ══════════════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
 
@@ -27,12 +28,10 @@
   --border:    rgba(200,169,90,0.5);
 
   /* User colors */
-  --col-black:  #1a1a2e;
-  --col-black-t:#3a3a6e;
-  --col-white:  #e8e8f0;
-  --col-white-t:#a0a0c0;
-  --col-yellow: #f0c040;
-  --col-yellow-t:#c09010;
+  --col-choi:  #1a2a5e;
+  --col-lee:   #1a4a2a;
+  --col-park:  #4a1a1a;
+  --col-ma:    #3a1a5e;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -481,24 +480,30 @@ header h1 small {
   text-align: center;
   transition: all 0.2s;
 }
-.user-btn.black-btn {
-  background: rgba(26,26,46,0.8);
-  border-color: #3a3a8e;
-  color: #8888cc;
+.user-btn.choi-btn {
+  background: rgba(26,42,94,0.8);
+  border-color: #3a5abe;
+  color: #88aaee;
 }
-.user-btn.white-btn {
-  background: rgba(200,200,220,0.15);
-  border-color: #888;
-  color: #ccc;
+.user-btn.lee-btn {
+  background: rgba(26,74,42,0.8);
+  border-color: #3a8a5a;
+  color: #88dd99;
 }
-.user-btn.yellow-btn {
-  background: rgba(200,160,0,0.2);
-  border-color: #c09010;
-  color: #f0c040;
+.user-btn.park-btn {
+  background: rgba(74,26,26,0.8);
+  border-color: #be3a3a;
+  color: #ee8888;
 }
-.user-btn.active.black-btn  { border-color: #6666ff; box-shadow: 0 0 10px rgba(100,100,255,0.4); background: rgba(26,26,80,0.9); color: #aaaaff; }
-.user-btn.active.white-btn  { border-color: #eee;    box-shadow: 0 0 10px rgba(220,220,255,0.3); background: rgba(200,200,220,0.3); color: #fff; }
-.user-btn.active.yellow-btn { border-color: #f0c040; box-shadow: 0 0 10px rgba(240,192,64,0.5);  background: rgba(200,150,0,0.3);   color: #ffe060; }
+.user-btn.ma-btn {
+  background: rgba(58,26,94,0.8);
+  border-color: #8a3abe;
+  color: #cc88ee;
+}
+.user-btn.active.choi-btn { border-color: #5588ff; box-shadow: 0 0 10px rgba(85,136,255,0.5); background: rgba(26,42,120,0.9); color: #aaccff; }
+.user-btn.active.lee-btn  { border-color: #44dd77; box-shadow: 0 0 10px rgba(68,221,119,0.5); background: rgba(26,80,46,0.9);  color: #aaffbb; }
+.user-btn.active.park-btn { border-color: #ff5555; box-shadow: 0 0 10px rgba(255,85,85,0.5);  background: rgba(100,26,26,0.9); color: #ffaaaa; }
+.user-btn.active.ma-btn   { border-color: #cc55ff; box-shadow: 0 0 10px rgba(204,85,255,0.5); background: rgba(70,26,110,0.9); color: #ddaaff; }
 
 .modal-actions {
   display: flex; gap: 10px; margin-top: 20px;
@@ -596,25 +601,30 @@ header h1 small {
   <!-- Legend -->
   <div id="legend">
     <div class="legend-item">
-      <div class="legend-dot" style="background:#3a3aee;box-shadow:0 0 6px #3a3aee"></div>
-      <span>⬛ 블랙 — 네이버 개발자</span>
+      <div class="legend-dot" style="background:#5588ff;box-shadow:0 0 6px #5588ff"></div>
+      <span>🔵 최제식</span>
     </div>
     <div class="legend-item">
-      <div class="legend-dot" style="background:#ccccdd;box-shadow:0 0 6px rgba(200,200,255,0.5)"></div>
-      <span>⬜ 화이트 — 카카오 기획자</span>
+      <div class="legend-dot" style="background:#44dd77;box-shadow:0 0 6px rgba(68,221,119,0.6)"></div>
+      <span>🟢 이동욱</span>
     </div>
     <div class="legend-item">
-      <div class="legend-dot" style="background:#f0c040;box-shadow:0 0 6px rgba(240,192,64,0.6)"></div>
-      <span>🟡 옐로우 — 대학 교수</span>
+      <div class="legend-dot" style="background:#ff5555;box-shadow:0 0 6px rgba(255,85,85,0.6)"></div>
+      <span>🔴 박대선</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#cc55ff;box-shadow:0 0 6px rgba(204,85,255,0.6)"></div>
+      <span>🟣 마성호</span>
     </div>
   </div>
 
   <!-- Stats -->
   <div id="stats-bar">
     <div class="stat-pill">📅 전체 일정 <strong id="stat-total">0</strong>개</div>
-    <div class="stat-pill">⬛ 블랙 <strong id="stat-black">0</strong>개</div>
-    <div class="stat-pill">⬜ 화이트 <strong id="stat-white">0</strong>개</div>
-    <div class="stat-pill">🟡 옐로우 <strong id="stat-yellow">0</strong>개</div>
+    <div class="stat-pill">🔵 최제식 <strong id="stat-choi">0</strong>개</div>
+    <div class="stat-pill">🟢 이동욱 <strong id="stat-lee">0</strong>개</div>
+    <div class="stat-pill">🔴 박대선 <strong id="stat-park">0</strong>개</div>
+    <div class="stat-pill">🟣 마성호 <strong id="stat-ma">0</strong>개</div>
   </div>
 
   <!-- Month view -->
@@ -662,9 +672,10 @@ header h1 small {
     <div class="form-row">
       <label>작성자</label>
       <div class="user-selector">
-        <button class="user-btn black-btn active" data-user="black">⬛ 블랙</button>
-        <button class="user-btn white-btn"  data-user="white">⬜ 화이트</button>
-        <button class="user-btn yellow-btn" data-user="yellow">🟡 옐로우</button>
+        <button class="user-btn choi-btn active" data-user="choi">🔵 최제식</button>
+        <button class="user-btn lee-btn"        data-user="lee">🟢 이동욱</button>
+        <button class="user-btn park-btn"       data-user="park">🔴 박대선</button>
+        <button class="user-btn ma-btn"         data-user="ma">🟣 마성호</button>
       </div>
     </div>
 
@@ -736,9 +747,10 @@ function eventsForDate(dateStr) {
 //  User/color config  (White — 카카오 기획자 UX 설계)
 // ═══════════════════════════════════════════════════════
 const USER_CONFIG = {
-  black:  { label:'블랙',   emoji:'⬛', bg:'#1e1e60', border:'#4444cc', text:'#aaaaff' },
-  white:  { label:'화이트', emoji:'⬜', bg:'#303048', border:'#aaaacc', text:'#ffffff' },
-  yellow: { label:'옐로우', emoji:'🟡', bg:'#4a3a00', border:'#c8a000', text:'#ffe060' },
+  choi: { label:'최제식', emoji:'🔵', bg:'#1a2a6e', border:'#5588ff', text:'#aaccff' },
+  lee:  { label:'이동욱', emoji:'🟢', bg:'#1a4a2a', border:'#44dd77', text:'#aaffbb' },
+  park: { label:'박대선', emoji:'🔴', bg:'#5a1a1a', border:'#ff5555', text:'#ffaaaa' },
+  ma:   { label:'마성호', emoji:'🟣', bg:'#3a1a5e', border:'#cc55ff', text:'#ddaaff' },
 };
 
 // ═══════════════════════════════════════════════════════
@@ -935,7 +947,7 @@ function buildChip(ev, dateStr) {
 // ═══════════════════════════════════════════════════════
 //  Modal  (White — 카카오 기획자 UX 흐름)
 // ═══════════════════════════════════════════════════════
-let selectedUser = 'black';
+let selectedUser = 'choi';
 
 function openModal(dateStr, startH = 9) {
   document.getElementById('modal-overlay').classList.add('show');
@@ -945,7 +957,7 @@ function openModal(dateStr, startH = 9) {
   buildTimeOptions(document.getElementById('f-end'),   Math.min(startH + 1, 23));
   document.getElementById('f-title').value = '';
   document.getElementById('f-memo').value  = '';
-  setUser('black');
+  setUser('choi');
   setTimeout(() => document.getElementById('f-title').focus(), 100);
 }
 
@@ -964,10 +976,11 @@ function setUser(u) {
 //  Stats  (Yellow — 교수 데이터 정합성)
 // ═══════════════════════════════════════════════════════
 function updateStats() {
-  document.getElementById('stat-total').textContent  = events.length;
-  document.getElementById('stat-black').textContent  = events.filter(e=>e.user==='black').length;
-  document.getElementById('stat-white').textContent  = events.filter(e=>e.user==='white').length;
-  document.getElementById('stat-yellow').textContent = events.filter(e=>e.user==='yellow').length;
+  document.getElementById('stat-total').textContent = events.length;
+  document.getElementById('stat-choi').textContent  = events.filter(e=>e.user==='choi').length;
+  document.getElementById('stat-lee').textContent   = events.filter(e=>e.user==='lee').length;
+  document.getElementById('stat-park').textContent  = events.filter(e=>e.user==='park').length;
+  document.getElementById('stat-ma').textContent    = events.filter(e=>e.user==='ma').length;
 }
 
 // ═══════════════════════════════════════════════════════

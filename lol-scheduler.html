@@ -47,19 +47,19 @@ body {
 /* ── Background ── */
 #bg {
   position: fixed; inset: 0; z-index: 0;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(11,196,227,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(198,43,43,0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(200,169,90,0.06) 0%, transparent 50%),
-    url('https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Lux_0.jpg') center/cover no-repeat;
-  filter: brightness(0.22) saturate(1.4);
+  background: url('lor-bg.jpg') center 20%/cover no-repeat;
+  filter: brightness(0.38) saturate(1.2) contrast(1.05);
 }
 #bg::after {
   content: '';
   position: absolute; inset: 0;
   background:
-    linear-gradient(to bottom, rgba(1,10,19,0.4) 0%, transparent 40%, rgba(1,10,19,0.8) 100%),
-    repeating-linear-gradient(0deg, rgba(200,169,90,0.015) 0px, transparent 2px, transparent 40px);
+    linear-gradient(to bottom,
+      rgba(5,5,18,0.55) 0%,
+      rgba(5,5,18,0.18) 35%,
+      rgba(5,5,18,0.18) 65%,
+      rgba(5,5,18,0.75) 100%),
+    repeating-linear-gradient(0deg, rgba(200,169,90,0.012) 0px, transparent 2px, transparent 40px);
 }
 
 /* ── Layout ── */

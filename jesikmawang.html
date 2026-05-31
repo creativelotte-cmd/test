@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제식대마왕게임</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: radial-gradient(ellipse at center, #1a0050 0%, #000020 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 0 0;
+  user-select: none;
+  overflow-x: hidden;
+}
+canvas {
+  display: block;
+  border: 3px solid #FFD700;
+  border-radius: 4px;
+  box-shadow: 0 0 30px rgba(255,215,0,0.5), 0 0 60px rgba(255,100,0,0.3);
+}
+#ui-top {
+  width: 800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px 8px;
+  color: #FFD700;
+  font-family: 'Arial Black', Arial, sans-serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+#ui-top span { text-shadow: 0 0 8px #FFD700; }
+#lives-display { font-size: 20px; }
+
+#game-title {
+  margin-top: 14px;
+  font-family: 'Arial Black', '나눔고딕', Arial, sans-serif;
+  font-size: 52px;
+  font-weight: 900;
+  color: #FFD700;
+  text-align: center;
+  letter-spacing: 4px;
+  text-shadow:
+    3px 3px 0 #FF6600,
+    6px 6px 0 #CC2200,
+    9px 9px 0 #880000,
+    0 0 30px rgba(255,215,0,0.8);
+  animation: titlePulse 2s ease-in-out infinite;
+}
+@keyframes titlePulse {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.03); }
+}
+
+#controls {
+  margin-top: 8px;
+  color: rgba(255,215,0,0.55);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+</style>
+</head>
+<body>
+
+<div id="ui-top">
+  <span id="score-display">SCORE: 0</span>
+  <span id="lives-display">♥ ♥ ♥</span>
+</div>
+
+<canvas id="game" width="800" height="540"></canvas>
+
+<div id="game-title">제식대마왕게임</div>
+<div id="controls">← → 이동 &nbsp;|&nbsp; SPACE 시작/재시작</div>
+
+<script>
+// ═══════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════
+const W = 800, H = 540;
+const COLS = 16, ROWS = 10;
+const BW = 44, BH = 25;          // block width/height
+const BX = (W - COLS*BW) / 2;   // = 48
+const BY = 28;                    // blocks start Y
+const PAD_W = 120, PAD_H = 12;
+const PAD_Y = H - 38;
+const BALL_R = 9;
+const BASE_SPD = 5.2;
+const MARIO_W = 36, MARIO_H = 52; // Mario sprite size
+
+// ─── Pikachu pixel art ───────────────────
+// 0=empty 1=yellow 2=black 3=red 4=white 5=brown 6=orange
+const PIKA = [
+//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+  [ 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0], // 0 ear tips
+  [ 0, 2, 1, 6, 2, 0, 0, 0, 0, 0, 0, 2, 6, 1, 2, 0], // 1 ears
+  [ 0, 2, 1, 6, 2, 0, 0, 0, 0, 0, 0, 2, 6, 1, 2, 0], // 2 ears
+  [ 0, 0, 2, 1, 1, 2, 2, 0, 0, 2, 2, 1, 1, 2, 0, 0], // 3 head joins
+  [ 0, 0, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 0, 0], // 4 head
+  [ 0, 0, 2, 1, 4, 2, 1, 1, 1, 1, 2, 4, 1, 2, 0, 0], // 5 eyes
+  [ 0, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0], // 6 face
+  [ 0, 0, 2, 3, 1, 5, 1, 5, 5, 1, 5, 1, 3, 2, 0, 0], // 7 cheeks+smile
+  [ 0, 0, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0], // 8 chin
+  [ 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0], // 9 chin bottom
+];
+
+const BLOCK_COL = [
+  null,
+  '#F8D030', // 1 yellow
+  '#222222', // 2 black
+  '#FF4444', // 3 red/cheek
+  '#FFFFFF', // 4 white/eye
+  '#C87820', // 5 brown/mouth
+  '#F07010', // 6 orange/ear
+];
+const BLOCK_COL_LIGHT = [
+  null,
+  '#FFE860',
+  '#555555',
+  '#FF8888',
+  '#FFFFFF',
+  '#E0A040',
+  '#FFAA40',
+];
+
+// ─── Stars background ────────────────────
+const STARS = Array.from({length:80}, () => ({
+  x: Math.random()*W, y: Math.random()*H,
+  r: 0.5 + Math.random()*1.5,
+  a: Math.random(),
+}));
+
+// ═══════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════
+let blocks=[], ball={}, paddle={}, particles=[];
+let lives=3, score=0, hiScore=0;
+let state='start'; // start|playing|ready|win|lose
+let keys={};
+let animFrame=0;
+let shakeTimer=0;
+
+function initBlocks() {
+  blocks = [];
+  for (let r=0;r<ROWS;r++) {
+    for (let c=0;c<COLS;c++) {
+      const t = PIKA[r][c];
+      if (t===0) continue;
+      blocks.push({
+        r,c,
+        x: BX + c*BW, y: BY + r*BH,
+        w: BW-2, h: BH-2,
+        type: t,
+        hp: (t===2)?2:1, // black blocks need 2 hits
+        alive: true,
+        hit: 0, // flash timer
+      });
+    }
+  }
+}
+
+function initBall() {
+  const angle = -Math.PI/2 + (Math.random()-0.5)*0.8;
+  ball = {
+    x: paddle.x + PAD_W/2,
+    y: PAD_Y - 20,
+    vx: Math.cos(angle)*BASE_SPD,
+    vy: Math.sin(angle)*BASE_SPD,
+    r: BALL_R,
+    trail: [],
+  };
+}
+
+function initPaddle() {
+  paddle = { x:(W-PAD_W)/2, y:PAD_Y, w:PAD_W, h:PAD_H };
+}
+
+function restart() {
+  if (score > hiScore) hiScore = score;
+  lives=3; score=0;
+  initPaddle(); initBlocks(); initBall();
+  state='start';
+}
+
+// ═══════════════════════════════════════
+//  PHYSICS UPDATE
+// ═══════════════════════════════════════
+function update() {
+  animFrame++;
+
+  if (state !== 'playing') return;
+
+  // Paddle movement
+  const spd = 8;
+  if (keys['ArrowLeft']  || keys['KeyA']) paddle.x = Math.max(0, paddle.x-spd);
+  if (keys['ArrowRight'] || keys['KeyD']) paddle.x = Math.min(W-PAD_W, paddle.x+spd);
+
+  // Ball trail
+  ball.trail.push({x:ball.x, y:ball.y});
+  if (ball.trail.length > 8) ball.trail.shift();
+
+  // Move ball
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // Wall collision
+  if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx = Math.abs(ball.vx); playBeep(200,0.05); }
+  if (ball.x + ball.r > W) { ball.x = W-ball.r; ball.vx = -Math.abs(ball.vx); playBeep(200,0.05); }
+  if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy = Math.abs(ball.vy); playBeep(250,0.05); }
+
+  // Paddle collision
+  if (ball.vy>0 && ball.y+ball.r >= paddle.y && ball.y-ball.r <= paddle.y+PAD_H &&
+      ball.x >= paddle.x-ball.r && ball.x <= paddle.x+PAD_W+ball.r) {
+    ball.y = paddle.y - ball.r;
+    ball.vy = -Math.abs(ball.vy);
+    // Angle based on hit position
+    const rel = (ball.x - (paddle.x+PAD_W/2)) / (PAD_W/2);
+    ball.vx = rel * BASE_SPD * 1.3;
+    // Normalize
+    const spd2 = Math.sqrt(ball.vx**2 + ball.vy**2);
+    ball.vx = ball.vx/spd2*BASE_SPD;
+    ball.vy = -Math.abs(ball.vy/spd2*BASE_SPD);
+    playBeep(300,0.08);
+  }
+
+  // Ball lost
+  if (ball.y > H+30) {
+    lives--;
+    shakeTimer = 20;
+    playBeep(80,0.2);
+    if (lives<=0) { state='lose'; return; }
+    initBall(); state='ready';
+    return;
+  }
+
+  // Block collision
+  let hit = false;
+  for (let b of blocks) {
+    if (!b.alive || hit) continue;
+    const bx=b.x, by=b.y, bw=b.w, bh=b.h;
+    // AABB + circle check
+    const cx = Math.max(bx, Math.min(ball.x, bx+bw));
+    const cy = Math.max(by, Math.min(ball.y, by+bh));
+    const dx = ball.x - cx, dy = ball.y - cy;
+    if (dx*dx+dy*dy > ball.r*ball.r) continue;
+
+    hit = true;
+    // Determine bounce direction
+    const ol = (ball.x+ball.r) - bx;
+    const or2= (bx+bw) - (ball.x-ball.r);
+    const ot = (ball.y+ball.r) - by;
+    const ob = (by+bh) - (ball.y-ball.r);
+    const minO = Math.min(ol,or2,ot,ob);
+    if (minO===ol)       { ball.vx = -Math.abs(ball.vx); ball.x = bx - ball.r; }
+    else if (minO===or2) { ball.vx =  Math.abs(ball.vx); ball.x = bx+bw+ball.r; }
+    else if (minO===ot)  { ball.vy = -Math.abs(ball.vy); ball.y = by - ball.r; }
+    else                 { ball.vy =  Math.abs(ball.vy); ball.y = by+bh+ball.r; }
+
+    b.hp--;
+    b.hit = 8; // flash timer
+    if (b.hp<=0) {
+      b.alive=false;
+      score+=10;
+      shakeTimer = 3;
+      spawnParticles(bx+bw/2, by+bh/2, BLOCK_COL[b.type], 10);
+      playBeep(b.type===2?180:440, 0.06);
+    } else {
+      // Damaged - crack effect
+      playBeep(220,0.04);
+    }
+  }
+
+  // Particles
+  particles = particles.filter(p=>p.life>0);
+  for (let p of particles) {
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.15; p.life -= 0.025;
+  }
+
+  // Win check
+  if (blocks.every(b=>!b.alive)) {
+    score += 500;
+    spawnParticles(W/2,H/2,'#FFD700',40);
+    spawnParticles(W/2,H/2,'#FF4444',30);
+    spawnParticles(W/2,H/2,'#4488FF',30);
+    state='win';
+  }
+
+  if (shakeTimer>0) shakeTimer--;
+  document.getElementById('score-display').textContent = 'SCORE: '+score;
+  const hearts = '♥ '.repeat(lives).trim();
+  document.getElementById('lives-display').textContent = hearts;
+}
+
+// ═══════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════
+function spawnParticles(x,y,color,n=8) {
+  for (let i=0;i<n;i++) {
+    const a = Math.random()*Math.PI*2;
+    const s = 1.5+Math.random()*4;
+    particles.push({x,y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+                    life:1, color, r:1.5+Math.random()*3});
+  }
+}
+
+// ═══════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════
+let audioCtx;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playBeep(freq, vol=0.05, dur=0.05) {
+  try {
+    const ac = getAudio();
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+    o.start(); o.stop(ac.currentTime+dur);
+  } catch(e){}
+}
+
+// ═══════════════════════════════════════
+//  DRAWING
+// ═══════════════════════════════════════
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function drawStars() {
+  for (const s of STARS) {
+    const a = 0.3 + 0.7*Math.abs(Math.sin(animFrame*0.02 + s.x));
+    ctx.globalAlpha = a * s.a;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBlocks() {
+  for (const b of blocks) {
+    if (!b.alive) continue;
+    if (b.hit>0) b.hit--;
+
+    const flash = b.hit>0;
+    const col   = flash ? '#FFFFFF' : BLOCK_COL[b.type];
+    const colLt = flash ? '#FFFFFF' : BLOCK_COL_LIGHT[b.type];
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(b.x+3, b.y+3, b.w, b.h);
+
+    // Main body
+    ctx.fillStyle = col;
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+
+    // Highlight top
+    ctx.fillStyle = colLt;
+    ctx.fillRect(b.x, b.y, b.w, 4);
+    // Highlight left
+    ctx.fillRect(b.x, b.y, 3, b.h);
+
+    // Darken bottom
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(b.x, b.y+b.h-4, b.w, 4);
+    ctx.fillRect(b.x+b.w-3, b.y, 3, b.h);
+
+    // Border
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(b.x+0.5, b.y+0.5, b.w-1, b.h-1);
+
+    // Crack for damaged black blocks
+    if (b.type===2 && b.hp===1) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(b.x+b.w*0.5, b.y+2);
+      ctx.lineTo(b.x+b.w*0.35, b.y+b.h*0.5);
+      ctx.lineTo(b.x+b.w*0.6, b.y+b.h-2);
+      ctx.stroke();
+    }
+
+    // Glow for yellow blocks (pikachu face)
+    if (b.type===1 && !flash) {
+      ctx.shadowColor = '#F8D030';
+      ctx.shadowBlur  = 4;
+      ctx.fillStyle   = 'transparent';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.shadowBlur  = 0;
+    }
+  }
+}
+
+// ─── Mario character ───────────────────
+function drawMario(cx, cy) {
+  // cx,cy = center x, feet y
+  const s = (v)=>v; // scale helper (1:1 for now)
+
+  // === HAT ===
+  // hat brim
+  ctx.fillStyle = '#FF0000';
+  ctx.fillRect(cx-17, cy-50, 34, 6);
+  // hat top
+  ctx.fillRect(cx-12, cy-62, 24, 14);
+  // hat M badge
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 10px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('M', cx, cy-52);
+
+  // === HAIR (behind face) ===
+  ctx.fillStyle = '#7B3F00';
+  ctx.fillRect(cx-14, cy-46, 10, 8);
+
+  // === FACE ===
+  ctx.fillStyle = '#FFBA7B';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy-36, 13, 12, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // === EYES ===
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.ellipse(cx+5, cy-38, 2.5, 3, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(cx+6, cy-39, 1, 0, Math.PI*2);
+  ctx.fill();
+
+  // === MUSTACHE ===
+  ctx.fillStyle = '#7B3F00';
+  ctx.beginPath();
+  ctx.ellipse(cx-1, cy-30, 8, 4, 0, 0, Math.PI);
+  ctx.fill();
+  // mustache halves gap
+  ctx.fillStyle = '#FFBA7B';
+  ctx.fillRect(cx-1, cy-32, 2, 5);
+
+  // === NOSE ===
+  ctx.fillStyle = '#FFAA55';
+  ctx.beginPath();
+  ctx.ellipse(cx+2, cy-34, 3, 2.5, 0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // === BODY / SHIRT (red) ===
+  ctx.fillStyle = '#FF0000';
+  ctx.fillRect(cx-12, cy-24, 24, 14);
+
+  // === OVERALLS (blue) ===
+  ctx.fillStyle = '#0044CC';
+  // bib
+  ctx.fillRect(cx-7, cy-22, 14, 10);
+  // pants left
+  ctx.fillRect(cx-14, cy-10, 12, 14);
+  // pants right
+  ctx.fillRect(cx+2, cy-10, 12, 14);
+
+  // Overalls straps
+  ctx.fillStyle = '#0044CC';
+  ctx.fillRect(cx-4, cy-24, 4, 4);
+  ctx.fillRect(cx, cy-24, 4, 4);
+
+  // Overall buttons
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath(); ctx.arc(cx-4, cy-14, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+4, cy-14, 2, 0, Math.PI*2); ctx.fill();
+
+  // === ARMS ===
+  ctx.fillStyle = '#FFBA7B';
+  // left arm
+  ctx.fillRect(cx-18, cy-22, 7, 10);
+  // right arm
+  ctx.fillRect(cx+11, cy-22, 7, 10);
+  // gloves
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath(); ctx.arc(cx-14, cy-12, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+16, cy-12, 5, 0, Math.PI*2); ctx.fill();
+
+  // === SHOES (brown) ===
+  ctx.fillStyle = '#5C3317';
+  ctx.beginPath();
+  ctx.ellipse(cx-8, cy+4, 8, 5, -0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx+8, cy+4, 8, 5, 0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  // shoe shine
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath(); ctx.ellipse(cx-10, cy+2, 3, 2, -0.3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+6,  cy+2, 3, 2,  0.3, 0, Math.PI*2); ctx.fill();
+}
+
+function drawPaddle() {
+  const px = paddle.x, py = paddle.y;
+  const pw = paddle.w, ph = paddle.h;
+
+  // Platform brick - Mario-style brick platform
+  // Base
+  ctx.fillStyle = '#CC4400';
+  ctx.fillRect(px, py, pw, ph);
+  // Highlight
+  ctx.fillStyle = '#FF6622';
+  ctx.fillRect(px, py, pw, 4);
+  // Dark bottom
+  ctx.fillStyle = '#882200';
+  ctx.fillRect(px, py+ph-3, pw, 3);
+  // Brick lines
+  ctx.strokeStyle = '#AA3300';
+  ctx.lineWidth = 1;
+  for (let i=24; i<pw; i+=24) {
+    ctx.beginPath();
+    ctx.moveTo(px+i, py);
+    ctx.lineTo(px+i, py+ph);
+    ctx.stroke();
+  }
+  // Glow
+  ctx.fillStyle = 'rgba(255,200,100,0.15)';
+  ctx.fillRect(px, py, pw, ph);
+
+  // Mario character centered above platform
+  const bobY = py + Math.sin(animFrame*0.15)*2; // gentle bob
+  drawMario(px + pw/2, bobY);
+}
+
+function drawBall() {
+  // Trail
+  for (let i=0; i<ball.trail.length; i++) {
+    const t = ball.trail[i];
+    const alpha = i/ball.trail.length * 0.5;
+    const r = ball.r * (i/ball.trail.length) * 0.8;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#FF6600';
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Ball body
+  const grad = ctx.createRadialGradient(ball.x-3, ball.y-3, 1, ball.x, ball.y, ball.r);
+  grad.addColorStop(0, '#FFEE44');
+  grad.addColorStop(0.5, '#FF4400');
+  grad.addColorStop(1, '#CC0000');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ball shine
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.arc(ball.x-3, ball.y-3, 3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Glow
+  ctx.shadowColor = '#FF6600';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = 'rgba(255,100,0,0)';
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawOverlay(title, sub, color='#FFD700') {
+  ctx.fillStyle = 'rgba(0,0,10,0.78)';
+  ctx.fillRect(0,0,W,H);
+
+  // Panel
+  ctx.fillStyle = 'rgba(10,0,40,0.9)';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  const pw=480, ph=200, px=(W-pw)/2, py=(H-ph)/2;
+  ctx.beginPath();
+  ctx.roundRect(px,py,pw,ph,12);
+  ctx.fill(); ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = color;
+  ctx.font = 'bold 42px Arial Black, Arial';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 20;
+  ctx.fillText(title, W/2, H/2-20);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '18px Arial';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillText(sub, W/2, H/2+30);
+
+  // Score display in overlay
+  ctx.font = 'bold 16px Arial';
+  ctx.fillStyle = 'rgba(255,215,0,0.7)';
+  ctx.fillText('SCORE: '+score + '   HI: '+hiScore, W/2, H/2+68);
+}
+
+function drawPikaWin() {
+  // Big Pikachu celebration drawing in win screen
+  const t = animFrame;
+  const pikaX = W/2, pikaY = H/2-40;
+  const sc = 1 + 0.04*Math.sin(t*0.1);
+
+  ctx.save();
+  ctx.translate(pikaX, pikaY);
+  ctx.scale(sc, sc);
+
+  // Body
+  ctx.fillStyle = '#F8D030';
+  ctx.beginPath();
+  ctx.ellipse(0, 20, 55, 50, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ears
+  ctx.fillStyle = '#F8D030';
+  ctx.beginPath();
+  ctx.ellipse(-35, -55, 12, 28, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(35, -55, 12, 28, 0.3, 0, Math.PI*2);
+  ctx.fill();
+  // Ear tips (black)
+  ctx.fillStyle = '#222222';
+  ctx.beginPath(); ctx.ellipse(-35,-76,9,10,-0.3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 35,-76,9,10, 0.3,0,Math.PI*2); ctx.fill();
+
+  // Face
+  ctx.fillStyle = '#F8D030';
+  ctx.beginPath();
+  ctx.ellipse(0,-20, 45,40, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#222222';
+  ctx.beginPath(); ctx.ellipse(-16,-22,7,9,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 16,-22,7,9,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath(); ctx.arc(-13,-25,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 19,-25,3,0,Math.PI*2); ctx.fill();
+
+  // Cheeks
+  ctx.fillStyle = 'rgba(255,68,68,0.7)';
+  ctx.beginPath(); ctx.ellipse(-30,-5,13,9,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 30,-5,13,9,0,0,Math.PI*2); ctx.fill();
+
+  // Smile
+  ctx.strokeStyle = '#C87820';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, -5, 18, 0.2, Math.PI-0.2);
+  ctx.stroke();
+
+  // Tail lightning bolt
+  ctx.fillStyle = '#F8D030';
+  ctx.beginPath();
+  ctx.moveTo(50,10); ctx.lineTo(70,0); ctx.lineTo(60,20);
+  ctx.lineTo(85,15); ctx.lineTo(65,40); ctx.lineTo(75,30); ctx.lineTo(50,35);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#C8A020'; ctx.lineWidth=1; ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHUD() {
+  // Lives hearts
+  ctx.font = '18px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#FF4444';
+  for (let i=0;i<lives;i++) {
+    ctx.fillText('♥', 10+i*22, 18);
+  }
+}
+
+// ─── Pikachu "alive" overlay behind blocks ───
+function drawPikachuBehind() {
+  // Draw a faint Pikachu silhouette behind the blocks
+  const remaining = blocks.filter(b=>b.alive).length;
+  const total = blocks.length;
+  const alpha = 0.06 + (1-remaining/total)*0.0;
+
+  // Just show glow hints
+  const centerX = BX + COLS*BW/2;
+  const centerY = BY + ROWS*BH/2;
+
+  const grad = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, COLS*BW/2.5);
+  grad.addColorStop(0, `rgba(248,208,48,${alpha})`);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(BX, BY, COLS*BW, ROWS*BH);
+}
+
+// ═══════════════════════════════════════
+//  MAIN DRAW
+// ═══════════════════════════════════════
+function draw() {
+  // Shake
+  ctx.save();
+  if (shakeTimer>0) {
+    ctx.translate((Math.random()-0.5)*6*shakeTimer/20, (Math.random()-0.5)*6*shakeTimer/20);
+  }
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0, '#0a0025');
+  bgGrad.addColorStop(1, '#0d0035');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  drawStars();
+  drawPikachuBehind();
+  drawBlocks();
+  drawParticles();
+
+  if (state==='playing' || state==='ready') {
+    drawBall();
+    drawPaddle();
+  } else if (state==='start') {
+    drawPaddle();
+    // Draw the ball stationary
+    ctx.globalAlpha=0.7+0.3*Math.abs(Math.sin(animFrame*0.05));
+    drawBall();
+    ctx.globalAlpha=1;
+    drawOverlay('제식대마왕게임', 'SPACE 키를 눌러 시작!', '#FFD700');
+  } else if (state==='ready') {
+    drawOverlay(`남은 목숨: ${lives}`, 'SPACE 키를 눌러 계속!', '#FF8800');
+  } else if (state==='win') {
+    // Celebration
+    ctx.fillStyle = 'rgba(0,0,10,0.7)';
+    ctx.fillRect(0,0,W,H);
+    drawPikaWin();
+    ctx.textAlign='center';
+    ctx.fillStyle='#FFD700';
+    ctx.shadowColor='#FFD700'; ctx.shadowBlur=30;
+    ctx.font='bold 52px Arial Black';
+    ctx.fillText('🎉 클리어! 🎉', W/2, 80);
+    ctx.shadowBlur=0;
+    ctx.font='20px Arial';
+    ctx.fillStyle='white';
+    ctx.fillText('피카츄를 물리쳤습니다!  SCORE: '+score, W/2, 130);
+    ctx.font='16px Arial';
+    ctx.fillStyle='rgba(255,215,0,0.7)';
+    ctx.fillText('SPACE 키로 다시 시작', W/2, H-20);
+  } else if (state==='lose') {
+    drawOverlay('💀 GAME OVER 💀', 'SPACE 키로 다시 시작', '#FF4444');
+  }
+
+  if (state==='ready') {
+    // "continue?" prompt
+    drawPaddle();
+    ctx.fillStyle='rgba(0,0,10,0.6)';
+    ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle='#FF8800';
+    ctx.font='bold 32px Arial Black';
+    ctx.shadowColor='#FF8800'; ctx.shadowBlur=15;
+    ctx.fillText(`남은 목숨: ${'♥'.repeat(lives)}`, W/2, H/2-20);
+    ctx.shadowBlur=0;
+    ctx.font='18px Arial';
+    ctx.fillStyle='white';
+    ctx.fillText('SPACE 키를 눌러 계속!', W/2, H/2+20);
+  }
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════
+document.addEventListener('keydown', e => {
+  keys[e.code]=true;
+  if (e.code==='Space') {
+    e.preventDefault();
+    if (state==='start' || state==='ready') { state='playing'; playBeep(440,0.05,0.1); }
+    else if (state==='win' || state==='lose') { restart(); }
+  }
+});
+document.addEventListener('keyup', e => { keys[e.code]=false; });
+
+// Mouse control
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  paddle.x = Math.max(0, Math.min(W-PAD_W, mx - PAD_W/2));
+});
+canvas.addEventListener('click', () => {
+  if (state==='start'||state==='ready') { state='playing'; playBeep(440,0.05,0.1); }
+  else if (state==='win'||state==='lose') restart();
+});
+
+// ═══════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+restart();
+loop();
+</script>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCK x LOTTE 콜라보 스낵 갤러리</title>
+<style>
+  :root{
+    --red:#e2231a;
+    --gold:#ffd23f;
+    --dark:#0b0e1a;
+    --panel:#141a2e;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Pretendard','Segoe UI',sans-serif;
+    background:radial-gradient(circle at 50% 0%, #1b2440 0%, var(--dark) 60%);
+    color:#fff;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+
+  /* ---------- Floating particles ---------- */
+  .particles{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+  }
+  .particle{
+    position:absolute;
+    border-radius:50%;
+    background:radial-gradient(circle, var(--gold) 0%, transparent 70%);
+    opacity:.5;
+    animation: float 12s linear infinite;
+  }
+  @keyframes float{
+    0%{ transform: translateY(110vh) translateX(0) scale(.5); opacity:0;}
+    10%{ opacity:.6;}
+    90%{ opacity:.6;}
+    100%{ transform: translateY(-10vh) translateX(40px) scale(1.2); opacity:0;}
+  }
+
+  /* ---------- Hero ---------- */
+  header{
+    position:relative;
+    text-align:center;
+    padding:60px 20px 40px;
+    z-index:1;
+  }
+  .badge{
+    display:inline-block;
+    background:linear-gradient(90deg,var(--red),#ff5b4d);
+    padding:8px 22px;
+    border-radius:999px;
+    font-size:.85rem;
+    letter-spacing:3px;
+    font-weight:700;
+    box-shadow:0 0 25px rgba(226,35,26,.6);
+    animation: pulseGlow 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 0 15px rgba(226,35,26,.5);}
+    50%{ box-shadow:0 0 35px rgba(255,210,63,.7);}
+  }
+  h1{
+    margin-top:18px;
+    font-size:clamp(2rem, 5vw, 3.6rem);
+    background:linear-gradient(90deg,#fff, var(--gold), #fff);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    animation: shine 3s linear infinite;
+    text-shadow:0 0 40px rgba(255,210,63,.25);
+  }
+  @keyframes shine{
+    to{ background-position:200% center; }
+  }
+  header p{
+    margin-top:14px;
+    color:#9aa4c7;
+    font-size:1.05rem;
+  }
+
+  /* ---------- Hero image (main pack) ---------- */
+  .hero-stage{
+    position:relative;
+    max-width:780px;
+    margin:50px auto 0;
+    z-index:1;
+  }
+  .hero-img-wrap{
+    position:relative;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+    animation: floatPack 5s ease-in-out infinite;
+    cursor:pointer;
+    transition: transform .4s ease;
+  }
+  .hero-img-wrap:hover{ transform: scale(1.02) rotate(-0.5deg); }
+  @keyframes floatPack{
+    0%,100%{ transform: translateY(0px) rotate(0deg); }
+    50%{ transform: translateY(-14px) rotate(0.6deg); }
+  }
+  .hero-img-wrap img{
+    width:100%; display:block;
+  }
+  .hero-img-wrap::after{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.25) 45%, transparent 60%);
+    background-size:250% 250%;
+    background-position:120% 0;
+    animation: sweep 4.5s ease-in-out infinite;
+    mix-blend-mode:overlay;
+  }
+  @keyframes sweep{
+    0%, 60%{ background-position:120% 0; }
+    100%{ background-position:-20% 0; }
+  }
+
+  /* ---------- Member tag highlight ---------- */
+  .hint{
+    text-align:center;
+    margin-top:18px;
+    color:#6f7aa3;
+    font-size:.9rem;
+  }
+
+  /* ---------- Section divider ---------- */
+  .section-title{
+    text-align:center;
+    margin:90px 0 10px;
+    font-size:clamp(1.5rem, 3.5vw, 2.2rem);
+    font-weight:800;
+    z-index:1;
+    position:relative;
+  }
+  .section-title span{
+    color:var(--gold);
+  }
+  .section-sub{
+    text-align:center;
+    color:#9aa4c7;
+    margin-bottom:50px;
+  }
+
+  /* ---------- Gallery ---------- */
+  .gallery-stage{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 20px 40px;
+    position:relative;
+    z-index:1;
+  }
+  .gallery-img{
+    width:100%;
+    border-radius:18px;
+    display:block;
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+  }
+
+  /* ---------- Card grid (clickable items overlay) ---------- */
+  .card-grid{
+    max-width:1100px;
+    margin:40px auto 100px;
+    padding:0 20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+    gap:18px;
+    z-index:1;
+    position:relative;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;
+    padding:18px;
+    text-align:center;
+    cursor:pointer;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 0%, rgba(255,210,63,.18), transparent 60%);
+    opacity:0;
+    transition:opacity .3s ease;
+  }
+  .card:hover{
+    transform: translateY(-8px) scale(1.03);
+    box-shadow:0 18px 40px rgba(255,210,63,.18);
+    border-color: rgba(255,210,63,.4);
+  }
+  .card:hover::before{ opacity:1; }
+  .card .emoji{
+    font-size:2.2rem;
+    display:block;
+    margin-bottom:10px;
+    transition: transform .3s ease;
+  }
+  .card:hover .emoji{ transform: scale(1.25) rotate(-8deg); }
+  .card h3{
+    font-size:1rem;
+    margin-bottom:6px;
+    position:relative;
+  }
+  .card p{
+    font-size:.8rem;
+    color:#9aa4c7;
+    position:relative;
+  }
+
+  /* ---------- Score game ---------- */
+  .game-box{
+    max-width:560px;
+    margin:0 auto 100px;
+    background:var(--panel);
+    border-radius:20px;
+    padding:36px 24px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.06);
+    z-index:1;
+    position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+  }
+  .game-box h2{
+    font-size:1.4rem;
+    margin-bottom:8px;
+  }
+  .game-box p{
+    color:#9aa4c7;
+    margin-bottom:24px;
+    font-size:.9rem;
+  }
+  #target{
+    font-size:3.5rem;
+    display:inline-block;
+    cursor:pointer;
+    user-select:none;
+    transition: transform .12s ease;
+    filter: drop-shadow(0 0 20px rgba(255,210,63,.5));
+  }
+  #target:active{ transform: scale(.85); }
+  .score-row{
+    margin-top:24px;
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    font-size:1rem;
+    color:#9aa4c7;
+  }
+  .score-row b{
+    color:var(--gold);
+    font-size:1.4rem;
+  }
+
+  footer{
+    text-align:center;
+    padding:30px;
+    color:#5a6488;
+    font-size:.85rem;
+    z-index:1;
+    position:relative;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.75);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    padding:20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal.open{ display:flex; }
+  .modal-content{
+    background:var(--panel);
+    border-radius:18px;
+    padding:28px;
+    max-width:420px;
+    text-align:center;
+    border:1px solid rgba(255,210,63,.3);
+    box-shadow:0 0 60px rgba(255,210,63,.25);
+    animation: pop .3s ease;
+  }
+  @keyframes pop{
+    from{ transform:scale(.85); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+  .modal-content .emoji{ font-size:3rem; }
+  .modal-content h3{ margin:12px 0 6px; }
+  .modal-content p{ color:#9aa4c7; font-size:.9rem; margin-bottom:18px; }
+  .modal-content button{
+    background:var(--red);
+    color:#fff;
+    border:none;
+    padding:10px 26px;
+    border-radius:999px;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform .2s ease;
+  }
+  .modal-content button:hover{ transform:scale(1.06); }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<header>
+  <span class="badge">LOTTE × LCK COLLAB</span>
+  <h1>LCK 미드라인 LEGENDS<br>스낵 갤러리</h1>
+  <p>꼬깔콘부터 챔피언 콜라보 과자까지 — 클릭해서 둘러보세요</p>
+
+  <div class="hero-stage">
+    <div class="hero-img-wrap" onclick="openModal('hero')">
+      <img src="Gemini_Generated_Image_nko0d4nko0d4nko0.png" alt="LCK 미드라이너 10인 꼬깔콘 온팩 스페셜 에디션">
+    </div>
+    <p class="hint">✨ 이미지를 클릭해 보세요</p>
+  </div>
+</header>
+
+<h2 class="section-title">League of Legends <span>x</span> 롯데 콜라보 라인업</h2>
+<p class="section-sub">거석의 파편 · 샤코의 깜짝 상자 · 미끼를 물었다 · 딥 보이드 · 자크의 세포 분열</p>
+
+<div class="gallery-stage">
+  <img class="gallery-img" src="Gemini_Generated_Image_tv3g9ptv3g9ptv3g.png" alt="LoL 콜라보 과자 라인업">
+</div>
+
+<div class="card-grid">
+  <div class="card" onclick="openModal('crunky')">
+    <span class="emoji">🪨</span>
+    <h3>크런키</h3>
+    <p>거석의 파편 에디션</p>
+  </div>
+  <div class="card" onclick="openModal('kkokkal')">
+    <span class="emoji">🃏</span>
+    <h3>꼬깔콘</h3>
+    <p>샤코의 깜짝 상자 에디션</p>
+  </div>
+  <div class="card" onclick="openModal('chosbar')">
+    <span class="emoji">🦈</span>
+    <h3>죠스바</h3>
+    <p>미끼를 물었다 에디션</p>
+  </div>
+  <div class="card" onclick="openModal('moncher')">
+    <span class="emoji">🌀</span>
+    <h3>몽쉘</h3>
+    <p>딥 보이드 에디션</p>
+  </div>
+  <div class="card" onclick="openModal('jjang')">
+    <span class="emoji">🟢</span>
+    <h3>짱셔요</h3>
+    <p>자크의 세포 분열 젤리</p>
+  </div>
+</div>
+
+<div class="game-box">
+  <h2>🌽 콘 캐치 게임</h2>
+  <p>옥수수를 클릭해서 점수를 모아보세요!</p>
+  <div id="target" onclick="catchCorn()">🌽</div>
+  <div class="score-row">
+    <div>SCORE<br><b id="score">0</b></div>
+    <div>TIME<br><b id="time">15</b></div>
+  </div>
+</div>
+
+<footer>LOTTE × LCK Mid Lane Legends · Fan Page</footer>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="emoji" id="modal-emoji">🌽</span>
+    <h3 id="modal-title"></h3>
+    <p id="modal-desc"></p>
+    <button onclick="closeModal()">닫기</button>
+  </div>
+</div>
+
+<script>
+  // floating particles
+  const pc = document.getElementById('particles');
+  for(let i=0;i<28;i++){
+    const p = document.createElement('div');
+    p.className='particle';
+    const size = 4 + Math.random()*10;
+    p.style.width = size+'px';
+    p.style.height = size+'px';
+    p.style.left = Math.random()*100+'vw';
+    p.style.animationDelay = (Math.random()*12)+'s';
+    p.style.animationDuration = (8+Math.random()*8)+'s';
+    pc.appendChild(p);
+  }
+
+  const info = {
+    hero:{emoji:'🌽', title:'LCK 미드라이너 10인 온팩 스페셜', desc:'LSB, NS, Faker, HLE, KT / Showmaker, KDF, Chovy, BRO, DRX — LCK를 빛낸 미드라이너 10인이 모두 담긴 꼬깔콘 스페셜 에디션!'},
+    crunky:{emoji:'🪨', title:'크런키 - 거석의 파편 에디션', desc:'단단한 초콜릿 속에 숨겨진 거석의 힘을 느껴보세요.'},
+    kkokkal:{emoji:'🃏', title:'꼬깔콘 - 샤코의 깜짝 상자 에디션', desc:'언제 어디서 튀어나올지 모르는 샤코처럼, 깜짝 놀랄 맛!'},
+    chosbar:{emoji:'🦈', title:'죠스바 - 미끼를 물었다 에디션', desc:'시원한 바다 속, 미끼를 덥석 무는 짜릿한 한입.'},
+    moncher:{emoji:'🌀', title:'몽쉘 - 딥 보이드 에디션', desc:'게임탄로 기퍼럼 보는 깜! 패리이 검이아 마길 — 신비로운 딥 보이드의 맛.'},
+    jjang:{emoji:'🟢', title:'짱셔요 - 자크의 세포 분열 젤리', desc:'쫀득쫀득, 자크처럼 쫄깃하게 분열되는 젤리!'}
+  };
+
+  function openModal(key){
+    const data = info[key];
+    document.getElementById('modal-emoji').textContent = data.emoji;
+    document.getElementById('modal-title').textContent = data.title;
+    document.getElementById('modal-desc').textContent = data.desc;
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal(){
+    document.getElementById('modal').classList.remove('open');
+  }
+  document.getElementById('modal').addEventListener('click', e=>{
+    if(e.target.id==='modal') closeModal();
+  });
+
+  // Corn catch game
+  let score = 0;
+  let timeLeft = 15;
+  let timerStarted = false;
+  let timerId = null;
+
+  function catchCorn(){
+    if(!timerStarted){
+      timerStarted = true;
+      timerId = setInterval(()=>{
+        timeLeft--;
+        document.getElementById('time').textContent = timeLeft;
+        if(timeLeft<=0){
+          clearInterval(timerId);
+          document.getElementById('target').style.pointerEvents='none';
+          document.getElementById('target').textContent='🏁';
+        }
+      },1000);
+    }
+    if(timeLeft<=0) return;
+    score++;
+    document.getElementById('score').textContent = score;
+    const stage = document.querySelector('.game-box');
+    const target = document.getElementById('target');
+    const maxX = stage.clientWidth - 80;
+    target.style.position='relative';
+    target.style.left = (Math.random()*maxX - maxX/2)+'px';
+    target.style.transform = `scale(${1+Math.random()*0.3})`;
+  }
+</script>
+
+</body>
+</html>

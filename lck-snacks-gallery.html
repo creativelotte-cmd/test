@@ -38,6 +38,27 @@
     100%{ transform: translateY(-10vh) translateX(40px) scale(1.2); opacity:0;}
   }
 
+  /* ---------- Top banner ---------- */
+  .top-banner{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-height:60vh;
+    overflow:hidden;
+  }
+  .top-banner img{
+    width:100%;
+    display:block;
+    object-fit:cover;
+    object-position:center top;
+  }
+  .top-banner::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to bottom, transparent 60%, var(--dark) 100%);
+  }
+
   /* ---------- Hero ---------- */
   header{
     position:relative;
@@ -310,6 +331,10 @@
 <body>
 
 <div class="particles" id="particles"></div>
+
+<div class="top-banner">
+  <img src="Gemini_Generated_Image_nko0d4nko0d4nko0.png" alt="LCK 미드라이너 10인 꼬깔콘 온팩 스페셜 에디션">
+</div>
 
 <header>
   <span class="badge">LOTTE × LCK COLLAB</span>

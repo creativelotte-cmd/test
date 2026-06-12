@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포켓몬 롯데썸머마켓 별빛낙원</title>
+<style>
+  :root{
+    --sky:#5bc8f5;
+    --sand:#ffe6a7;
+    --coral:#ff6b6b;
+    --deep:#1b3a6b;
+    --gold:#ffd24a;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    background:linear-gradient(180deg,#8fe3ff 0%,#bff0ff 35%,#fff6da 100%);
+    color:var(--deep);
+    min-height:100vh;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    text-align:center;
+    padding:36px 20px 24px;
+    position:relative;
+  }
+  header img.logo{
+    max-width:260px;
+    width:90%;
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,.15));
+  }
+  header h1{
+    margin-top:14px;
+    font-size:clamp(1.6rem,5vw,2.6rem);
+    color:var(--deep);
+    text-shadow:2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+    letter-spacing:1px;
+  }
+  header p.sub{
+    margin-top:8px;
+    font-size:1rem;
+    color:#3a6ea5;
+    font-weight:600;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:10px 20px 30px;
+  }
+  .hero img{
+    width:min(420px,90%);
+    animation: bob 3s ease-in-out infinite;
+    filter:drop-shadow(0 12px 20px rgba(0,0,0,.18));
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0) rotate(-2deg); }
+    50%{ transform:translateY(-14px) rotate(2deg); }
+  }
+
+  /* ---------- Sections ---------- */
+  .section-title{
+    text-align:center;
+    font-size:clamp(1.3rem,4vw,1.9rem);
+    color:var(--deep);
+    margin:30px auto 6px;
+    padding:0 16px;
+  }
+  .section-sub{
+    text-align:center;
+    color:#3a6ea5;
+    font-weight:600;
+    margin-bottom:24px;
+    padding:0 16px;
+  }
+
+  /* ---------- Event grid ---------- */
+  .grid{
+    max-width:1000px;
+    margin:0 auto;
+    padding:0 20px 40px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+  }
+  .card{
+    background:#fff;
+    border-radius:20px;
+    padding:22px 18px;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(27,58,107,.12);
+    border:3px solid #fff;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .card:hover{
+    transform:translateY(-8px) scale(1.03);
+    box-shadow:0 16px 30px rgba(27,58,107,.22);
+    border-color:var(--gold);
+  }
+  .card .emoji{
+    font-size:3rem;
+    display:block;
+    margin-bottom:10px;
+  }
+  .card .pokemon{
+    font-weight:800;
+    font-size:1.05rem;
+    color:var(--coral);
+    margin-bottom:4px;
+  }
+  .card .person{
+    font-size:.95rem;
+    color:#888;
+    margin-bottom:2px;
+  }
+  .card .event-name{
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--deep);
+  }
+  .card .badge{
+    display:inline-block;
+    margin-top:10px;
+    background:var(--sky);
+    color:#fff;
+    font-size:.8rem;
+    font-weight:700;
+    padding:4px 12px;
+    border-radius:999px;
+  }
+
+  /* ---------- Reward banner ---------- */
+  .reward{
+    max-width:880px;
+    margin:10px auto 50px;
+    padding:28px 24px;
+    text-align:center;
+    background:linear-gradient(135deg,#ffd24a,#ff9f6b);
+    border-radius:24px;
+    box-shadow:0 10px 26px rgba(255,140,80,.35);
+    color:#5a2c00;
+  }
+  .reward h2{
+    font-size:clamp(1.2rem,4vw,1.6rem);
+    margin-bottom:10px;
+  }
+  .reward p{
+    font-size:1rem;
+    font-weight:600;
+    line-height:1.6;
+  }
+  .reward .card-emoji{
+    font-size:2.6rem;
+    margin-top:10px;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px;
+    color:#5a86b8;
+    font-size:.85rem;
+    font-weight:600;
+  }
+
+  /* ---------- Floating decor ---------- */
+  .floaters{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:-1;
+  }
+  .floaters span{
+    position:absolute;
+    font-size:2rem;
+    opacity:.35;
+    animation: drift 14s linear infinite;
+  }
+  @keyframes drift{
+    from{ transform:translateY(110vh) rotate(0deg); }
+    to{ transform:translateY(-10vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="floaters">
+  <span style="left:5%; animation-delay:0s;">⭐</span>
+  <span style="left:20%; animation-delay:3s;">🌊</span>
+  <span style="left:40%; animation-delay:6s;">⭐</span>
+  <span style="left:60%; animation-delay:2s;">🐚</span>
+  <span style="left:75%; animation-delay:8s;">🌊</span>
+  <span style="left:90%; animation-delay:5s;">⭐</span>
+</div>
+
+<header>
+  <img class="logo" src="pokemon-logo.png" alt="Pokemon Utopia Lotte Summer Market 로고">
+  <h1>포켓몬 롯데썸머마켓 별빛낙원</h1>
+  <p class="sub">7가지 포켓몬 이벤트를 모두 완료하고 특별한 선물을 받아가세요!</p>
+</header>
+
+<div class="hero">
+  <img src="magikarp-hero.png" alt="서핑하는 잉어킹">
+</div>
+
+<h2 class="section-title">✨ 별빛낙원 이벤트 ✨</h2>
+<p class="section-sub">담당자별 포켓몬 이벤트를 모두 즐겨보세요</p>
+
+<div class="grid">
+  <div class="card">
+    <span class="emoji">🐠</span>
+    <div class="pokemon">잉어킹</div>
+    <div class="person">담당 · 문혜진</div>
+    <div class="event-name">잉어킹 이벤트</div>
+    <span class="badge">EVENT 1</span>
+  </div>
+  <div class="card">
+    <span class="emoji">🐉</span>
+    <div class="pokemon">갸라도스</div>
+    <div class="person">담당 · 김미정</div>
+    <div class="event-name">갸라도스 이벤트</div>
+    <span class="badge">EVENT 2</span>
+  </div>
+  <div class="card">
+    <span class="emoji">⚡</span>
+    <div class="pokemon">피카츄</div>
+    <div class="person">담당 · 조은별</div>
+    <div class="event-name">피카츄 이벤트</div>
+    <span class="badge">EVENT 3</span>
+  </div>
+  <div class="card">
+    <span class="emoji">🐢</span>
+    <div class="pokemon">꼬부기</div>
+    <div class="person">담당 · 최제식</div>
+    <div class="event-name">꼬부기 이벤트</div>
+    <span class="badge">EVENT 4</span>
+  </div>
+  <div class="card">
+    <span class="emoji">🔥</span>
+    <div class="pokemon">리자몽</div>
+    <div class="person">담당 · 이동욱</div>
+    <div class="event-name">리자몽 이벤트</div>
+    <span class="badge">EVENT 5</span>
+  </div>
+  <div class="card">
+    <span class="emoji">🛡️</span>
+    <div class="pokemon">거북왕</div>
+    <div class="person">담당 · 박대선</div>
+    <div class="event-name">거북왕 이벤트</div>
+    <span class="badge">EVENT 6</span>
+  </div>
+  <div class="card">
+    <span class="emoji">🌱</span>
+    <div class="pokemon">이상해씨</div>
+    <div class="person">담당 · 마성호</div>
+    <div class="event-name">이상해씨 이벤트</div>
+    <span class="badge">EVENT 7</span>
+  </div>
+</div>
+
+<div class="reward">
+  <h2>🎁 올 클리어 기념 선물 🎁</h2>
+  <p>7개 이벤트를 모두 완료하신 분께는<br>
+  <strong>롯데백화점 잉어킹 프로모카드</strong>를 드립니다!</p>
+  <div class="card-emoji">🐠💳✨</div>
+</div>
+
+<footer>POKÉMON UTOPIA × LOTTE SUMMER MARKET · 별빛낙원</footer>
+
+</body>
+</html>

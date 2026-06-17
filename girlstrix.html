@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GIRLSTRIX</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0010;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Arial Black', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Neon background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(255,0,128,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,0,128,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  #game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #title-top {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(135deg, #ff0080, #ff69b4, #ff00ff, #ff0080);
+    background-size: 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleShine 3s linear infinite;
+    text-shadow: none;
+    filter: drop-shadow(0 0 10px rgba(255,0,128,0.8));
+  }
+
+  @keyframes titleShine {
+    0% { background-position: 0% }
+    100% { background-position: 300% }
+  }
+
+  #game-area {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  /* Left: info panel */
+  #left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 120px;
+  }
+
+  .panel-box {
+    background: rgba(255,0,128,0.08);
+    border: 1px solid rgba(255,0,128,0.4);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .panel-label {
+    color: #ff69b4;
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .panel-value {
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff0080;
+  }
+
+  #next-canvas {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Tetris board */
+  #board-canvas {
+    border: 2px solid #ff0080;
+    box-shadow: 0 0 20px #ff0080, 0 0 40px rgba(255,0,128,0.3), inset 0 0 20px rgba(255,0,128,0.05);
+    display: block;
+  }
+
+  /* Right: character panel */
+  #char-panel {
+    width: 200px;
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    background: rgba(255,0,128,0.04);
+    border: 1px solid rgba(255,0,128,0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    padding-bottom: 10px;
+  }
+
+  /* Spotlight effect */
+  #char-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 100%;
+    background: radial-gradient(ellipse at top, rgba(255,100,200,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Stage floor */
+  #stage-floor {
+    position: absolute;
+    bottom: 50px;
+    left: 10%;
+    width: 80%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ff69b4, #ff0080, #ff69b4, transparent);
+    box-shadow: 0 0 10px #ff0080;
+  }
+
+  #char-status {
+    position: absolute;
+    top: 10px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #ff69b4;
+    text-transform: uppercase;
+  }
+
+  /* ───── Character SVG container ───── */
+  #character {
+    position: absolute;
+    bottom: 53px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110px;
+    height: 280px;
+  }
+
+  /* ═══ DANCE animation ═══ */
+  @keyframes bodyBop {
+    0%,100% { transform: translateX(-50%) rotate(0deg) translateY(0); }
+    25%      { transform: translateX(-50%) rotate(-3deg) translateY(-6px); }
+    50%      { transform: translateX(-50%) rotate(0deg) translateY(-10px); }
+    75%      { transform: translateX(-50%) rotate(3deg) translateY(-6px); }
+  }
+  @keyframes bodyBopFast {
+    0%,100% { transform: translateX(-50%) rotate(0deg) translateY(0); }
+    25%      { transform: translateX(-50%) rotate(-5deg) translateY(-10px); }
+    50%      { transform: translateX(-50%) rotate(0deg) translateY(-16px); }
+    75%      { transform: translateX(-50%) rotate(5deg) translateY(-10px); }
+  }
+  @key% bodyCry {
+    0%,100% { transform: translateX(-50%) rotate(0deg) translateY(0); }
+    50%      { transform: translateX(-50%) rotate(0deg) translateY(4px); }
+  }
+
+  #character.idle     { animation: none; }
+  #character.dancing  { animation: bodyBop 0.6s ease-in-out infinite; }
+  #character.excited  { animation: bodyBopFast 0.35s ease-in-out infinite; }
+  #character.crying   { animation: bodyCry 0.9s ease-in-out infinite; }
+
+  /* Hair bounce */
+  @keyframes hairBounce {
+    0%,100% { d: path("M 20,50 Q 55,-10 90,50 Q 75,30 55,20 Q 35,30 20,50"); }
+    50%      { d: path("M 20,55 Q 55,-5 90,55 Q 75,35 55,25 Q 35,35 20,55"); }
+  }
+
+  /* Arm wave L */
+  @keyframes armWaveL {
+    0%,100% { transform: rotate(0deg); transform-origin: top right; }
+    50%      { transform: rotate(-40deg); transform-origin: top right; }
+  }
+  @keyframes armWaveLFast {
+    0%,100% { transform: rotate(0deg); transform-origin: top right; }
+    50%      { transform: rotate(-60deg); transform-origin: top right; }
+  }
+  /* Arm wave R */
+  @keyframes armWaveR {
+    0%,100% { transform: rotate(0deg); transform-origin: top left; }
+    50%      { transform: rotate(40deg); transform-origin: top left; }
+  }
+  @keyframes armWaveRFast {
+    0%,100% { transform: rotate(0deg); transform-origin: top left; }
+    50%      { transform: rotate(60deg); transform-origin: top left; }
+  }
+  /* Leg swing */
+  @keyframes legSwingL {
+    0%,100% { transform: rotate(0deg); transform-origin: top center; }
+    50%      { transform: rotate(-20deg); transform-origin: top center; }
+  }
+  @keyframes legSwingR {
+    0%,100% { transform: rotate(0deg); transform-origin: top center; }
+    50%      { transform: rotate(20deg); transform-origin: top center; }
+  }
+  /* Hip sway skirt */
+  @keyframes skirtSway {
+    0%,100% { transform: rotate(0deg); transform-origin: top center; }
+    25%      { transform: rotate(-4deg); transform-origin: top center; }
+    75%      { transform: rotate(4deg); transform-origin: top center; }
+  }
+  /* Cry tears */
+  @keyframes tearDrop {
+    0%   { opacity: 0; transform: translateY(0); }
+    20%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(28px); }
+  }
+
+  .arm-left  { transform-origin: top right; }
+  .arm-right { transform-origin: top left; }
+  .leg-left  { transform-origin: top center; }
+  .leg-right { transform-origin: top center; }
+  .skirt-layer { transform-origin: top center; }
+  .tear { transform-origin: top center; }
+
+  #character.dancing .arm-left  { animation: armWaveL 0.6s ease-in-out infinite; }
+  #character.dancing .arm-right { animation: armWaveR 0.6s ease-in-out infinite 0.3s; }
+  #character.dancing .leg-left  { animation: legSwingL 0.6s ease-in-out infinite; }
+  #character.dancing .leg-right { animation: legSwingR 0.6s ease-in-out infinite 0.3s; }
+  #character.dancing .skirt-layer { animation: skirtSway 0.6s ease-in-out infinite; }
+
+  #character.excited .arm-left  { animation: armWaveLFast 0.35s ease-in-out infinite; }
+  #character.excited .arm-right { animation: armWaveRFast 0.35s ease-in-out infinite 0.175s; }
+  #character.excited .leg-left  { animation: legSwingL 0.35s ease-in-out infinite; }
+  #character.excited .leg-right { animation: legSwingR 0.35s ease-in-out infinite 0.175s; }
+  #character.excited .skirt-layer { animation: skirtSway 0.35s ease-in-out infinite; }
+
+  #character.crying .tear { animation: tearDrop 1.2s ease-in infinite; }
+  #character.crying .tear:nth-child(2) { animation-delay: 0.4s; }
+  #character.crying .tear:nth-child(3) { animation-delay: 0.8s; }
+
+  /* notes */
+  .music-note {
+    position: absolute;
+    font-size: 20px;
+    color: #ff69b4;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 0 0 8px #ff0080;
+  }
+  @keyframes noteFloat {
+    0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+    20%  { opacity: 1; transform: translateY(-20px) scale(1); }
+    100% { opacity: 0; transform: translateY(-80px) scale(0.7) rotate(20deg); }
+  }
+  #character.dancing  .music-note,
+  #character.excited  .music-note { animation: noteFloat 1.4s ease-out infinite; }
+  #character.dancing  .music-note:nth-child(1) { left: 5px;  animation-delay: 0s; }
+  #character.dancing  .music-note:nth-child(2) { right: 5px; animation-delay: 0.7s; }
+  #character.excited  .music-note:nth-child(1) { left: 0;    animation-delay: 0s; }
+  #character.excited  .music-note:nth-child(2) { right: 0;   animation-delay: 0.35s; }
+
+  /* Bottom title */
+  #bottom-title {
+    margin-top: 8px;
+    text-align: center;
+  }
+  #bottom-title span {
+    font-size: 13px;
+    letter-spacing: 5px;
+    color: rgba(255,105,180,0.6);
+    text-transform: uppercase;
+  }
+
+  /* Controls hint */
+  #controls {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .ctrl {
+    color: rgba(255,105,180,0.5);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  kbd {
+    background: rgba(255,0,128,0.15);
+    border: 1px solid rgba(255,0,128,0.4);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #ff69b4;
+  }
+
+  /* Game over overlay */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 100;
+  }
+  #overlay.show { display: flex; }
+  #overlay h2 {
+    font-size: 52px;
+    color: #ff0080;
+    text-shadow: 0 0 20px #ff0080;
+    letter-spacing: 4px;
+  }
+  #overlay p { color: #ff69b4; font-size: 18px; }
+  #restart-btn {
+    padding: 12px 36px;
+    background: linear-gradient(135deg, #ff0080, #ff00ff);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    box-shadow: 0 0 20px rgba(255,0,128,0.6);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #restart-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 30px rgba(255,0,128,0.9);
+  }
+
+  /* Line-clear flash */
+  @keyframes boardFlash {
+    0%   { box-shadow: 0 0 20px #ff0080, 0 0 40px rgba(255,0,128,0.3), inset 0 0 20px rgba(255,0,128,0.05); }
+    50%  { box-shadow: 0 0 40px #ff69b4, 0 0 80px rgba(255,105,180,0.7), inset 0 0 40px rgba(255,105,180,0.3); }
+    100% { box-shadow: 0 0 20px #ff0080, 0 0 40px rgba(255,0,128,0.3), inset 0 0 20px rgba(255,0,128,0.05); }
+  }
+  #board-canvas.flash { animation: boardFlash 0.4s ease-out; }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <div id="title-top">GIRLSTRIX</div>
+
+  <div id="game-area">
+
+    <!-- Left panel -->
+    <div id="left-panel">
+      <div class="panel-box">
+        <div class="panel-label">SCORE</div>
+        <div class="panel-value" id="score-val">0</div>
+      </div>
+      <div class="panel-box">
+        <div class="panel-label">LINES</div>
+        <div class="panel-value" id="lines-val">0</div>
+      </div>
+      <div class="panel-box">
+        <div class="panel-label">LEVEL</div>
+        <div class="panel-value" id="level-val">1</div>
+      </div>
+      <div class="panel-box">
+        <div class="panel-label">NEXT</div>
+        <canvas id="next-canvas" width="80" height="80"></canvas>
+      </div>
+    </div>
+
+    <!-- Tetris board -->
+    <canvas id="board-canvas" width="300" height="600"></canvas>
+
+    <!-- Character panel -->
+    <div id="char-panel">
+      <div id="char-status">♪ Let's Dance! ♪</div>
+
+      <!-- Music notes (outside character so they float from panel edges) -->
+      <div class="music-note" style="position:absolute;top:30px;left:20px;">♪</div>
+      <div class="music-note" style="position:absolute;top:30px;right:20px;">♫</div>
+
+      <!-- Character SVG -->
+      <div id="character" class="idle">
+        <!-- Floating music notes (part of character for animation class) -->
+        <div class="music-note" style="top:0;left:0;">♪</div>
+        <div class="music-note" style="top:0;right:0;">♫</div>
+
+        <svg viewBox="0 0 110 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;overflow:visible">
+          <defs>
+            <radialGradient id="skinGrad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#ffd4aa"/>
+              <stop offset="100%" stop-color="#f0a070"/>
+            </radialGradient>
+            <radialGradient id="faceGrad" cx="50%" cy="35%" r="60%">
+              <stop offset="0%" stop-color="#ffe0bb"/>
+              <stop offset="100%" stop-color="#f5b080"/>
+            </radialGradient>
+            <linearGradient id="hairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#1a0a2e"/>
+              <stop offset="100%" stop-color="#3d1060"/>
+            </linearGradient>
+            <linearGradient id="dressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff0080"/>
+              <stop offset="50%" stop-color="#ff00cc"/>
+              <stop offset="100%" stop-color="#cc0066"/>
+            </linearGradient>
+            <linearGradient id="skirtGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#ff00cc"/>
+              <stop offset="100%" stop-color="#ff69b4"/>
+            </linearGradient>
+            <linearGradient id="legGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#ffd4aa"/>
+              <stop offset="100%" stop-color="#e8a060"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="1.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="softGlow">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- ── HAIR back ── -->
+          <ellipse cx="55" cy="52" rx="30" ry="32" fill="url(#hairGrad)"/>
+          <!-- Long hair back strands -->
+          <path d="M 28,60 Q 18,110 22,170" stroke="#1a0a2e" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="M 82,60 Q 92,110 88,170" stroke="#1a0a2e" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="M 35,65 Q 24,120 28,185" stroke="#2a0a40" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path d="M 75,65 Q 86,120 82,185" stroke="#2a0a40" stroke-width="8" fill="none" stroke-linecap="round"/>
+
+          <!-- ── NECK ── -->
+          <rect x="47" y="78" width="16" height="18" rx="5" fill="url(#skinGrad)"/>
+
+          <!-- ── BODY / DRESS top ── -->
+          <path d="M 30,95 Q 28,88 38,86 Q 47,84 55,84 Q 63,84 72,86 Q 82,88 80,95
+                   L 82,150 Q 55,158 28,150 Z"
+                fill="url(#dressGrad)" filter="url(#glow)"/>
+
+          <!-- Dress details - neckline -->
+          <path d="M 42,86 Q 55,98 68,86" stroke="#ff69b4" stroke-width="1.5" fill="none" opacity="0.7"/>
+          <!-- Sparkle on dress -->
+          <circle cx="55" cy="115" r="2" fill="#ffccee" opacity="0.8"/>
+          <circle cx="45" cy="125" r="1.5" fill="#ffccee" opacity="0.6"/>
+          <circle cx="65" cy="122" r="1.5" fill="#ffccee" opacity="0.6"/>
+
+          <!-- ── ARMS ── -->
+          <!-- Left arm -->
+          <g class="arm-left">
+            <path d="M 30,96 Q 18,110 14,130 Q 12,138 16,140 Q 20,142 22,134 L 28,108"
+                  fill="url(#skinGrad)" stroke="#e8a060" stroke-width="0.5"/>
+            <!-- Hand L -->
+            <ellipse cx="15" cy="141" rx="6" ry="5" fill="url(#skinGrad)"/>
+            <!-- Bracelet L -->
+            <path d="M 11,138 Q 15,135 20,138" stroke="#ff69b4" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </g>
+          <!-- Right arm -->
+          <g class="arm-right">
+            <path d="M 80,96 Q 92,110 96,130 Q 98,138 94,140 Q 90,142 88,134 L 82,108"
+                  fill="url(#skinGrad)" stroke="#e8a060" stroke-width="0.5"/>
+            <!-- Hand R -->
+            <ellipse cx="95" cy="141" rx="6" ry="5" fill="url(#skinGrad)"/>
+            <!-- Bracelet R -->
+            <path d="M 90,138 Q 95,135 100,138" stroke="#ff00ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- ── SKIRT ── -->
+          <g class="skirt-layer">
+            <!-- Main skirt -->
+            <path d="M 28,148 Q 20,165 16,190 Q 14,210 55,215 Q 96,210 94,190 Q 90,165 82,148 Q 55,158 28,148 Z"
+                  fill="url(#skirtGrad)" filter="url(#glow)"/>
+            <!-- Skirt ruffle layer 1 -->
+            <path d="M 20,185 Q 37,198 55,196 Q 73,198 90,185 Q 73,210 55,208 Q 37,210 20,185 Z"
+                  fill="#ff69b4" opacity="0.7"/>
+            <!-- Skirt ruffle layer 2 -->
+            <path d="M 24,200 Q 40,216 55,214 Q 70,216 86,200 Q 70,222 55,220 Q 40,222 24,200 Z"
+                  fill="#ffaacc" opacity="0.5"/>
+            <!-- Skirt shine -->
+            <path d="M 34,150 Q 38,170 36,190" stroke="rgba(255,255,255,0.3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- ── LEGS ── -->
+          <!-- Left leg -->
+          <g class="leg-left">
+            <path d="M 38,213 Q 36,235 35,255 Q 34,262 40,263 Q 46,264 47,255 L 46,213"
+                  fill="url(#legGrad)" stroke="#e8a060" stroke-width="0.5"/>
+            <!-- Left boot -->
+            <path d="M 33,254 Q 33,268 40,270 Q 50,272 52,264 Q 54,256 47,254 Z"
+                  fill="#cc0066" filter="url(#glow)"/>
+            <!-- Boot heel -->
+            <rect x="33" y="266" width="5" height="8" rx="2" fill="#880044"/>
+            <!-- Boot shine -->
+            <path d="M 36,256 Q 40,254 44,257" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </g>
+          <!-- Right leg -->
+          <g class="leg-right">
+            <path d="M 64,213 Q 64,235 63,255 Q 62,262 68,263 Q 74,264 75,255 L 72,213"
+                  fill="url(#legGrad)" stroke="#e8a060" stroke-width="0.5"/>
+            <!-- Right boot -->
+            <path d="M 58,254 Q 58,268 66,270 Q 76,272 78,264 Q 80,256 73,254 Z"
+                  fill="#cc0066" filter="url(#glow)"/>
+            <!-- Boot heel -->
+            <rect x="62" y="266" width="5" height="8" rx="2" fill="#880044"/>
+            <!-- Boot shine -->
+            <path d="M 62,256 Q 66,254 70,257" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- ── FACE ── -->
+          <ellipse cx="55" cy="54" rx="26" ry="28" fill="url(#faceGrad)"/>
+
+          <!-- Ears -->
+          <ellipse cx="29" cy="55" rx="5" ry="7" fill="url(#faceGrad)"/>
+          <ellipse cx="81" cy="55" rx="5" ry="7" fill="url(#faceGrad)"/>
+          <!-- Ear earrings -->
+          <circle cx="29" cy="60" r="3" fill="#ff0080" filter="url(#glow)"/>
+          <circle cx="81" cy="60" r="3" fill="#ff00ff" filter="url(#glow)"/>
+
+          <!-- ── HAIR front ── -->
+          <path d="M 29,42 Q 55,18 81,42 Q 70,28 55,24 Q 40,28 29,42 Z" fill="url(#hairGrad)"/>
+          <!-- Bangs -->
+          <path d="M 30,45 Q 38,32 48,38" stroke="#1a0a2e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M 37,36 Q 46,26 56,30" stroke="#2a0a40" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <!-- Side hair highlights -->
+          <path d="M 30,44 Q 24,60 26,80" stroke="#5a2080" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+          <path d="M 80,44 Q 86,60 84,80" stroke="#5a2080" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+          <!-- Hair accessory -->
+          <circle cx="42" cy="34" r="5" fill="#ff0080" filter="url(#glow)"/>
+          <circle cx="42" cy="34" r="3" fill="#ffaacc"/>
+
+          <!-- ── EYES ── -->
+          <!-- Eye whites -->
+          <ellipse cx="44" cy="54" rx="9" ry="8" fill="white"/>
+          <ellipse cx="66" cy="54" rx="9" ry="8" fill="white"/>
+          <!-- Irises -->
+          <ellipse cx="44" cy="55" rx="6" ry="7" fill="#5500cc"/>
+          <ellipse cx="66" cy="55" rx="6" ry="7" fill="#5500cc"/>
+          <!-- Pupils -->
+          <ellipse cx="45" cy="56" rx="3.5" ry="4.5" fill="#110022"/>
+          <ellipse cx="67" cy="56" rx="3.5" ry="4.5" fill="#110022"/>
+          <!-- Eye shine -->
+          <circle cx="47" cy="53" r="2" fill="white"/>
+          <circle cx="69" cy="53" r="2" fill="white"/>
+          <circle cx="43" cy="58" r="1" fill="white" opacity="0.5"/>
+          <circle cx="65" cy="58" r="1" fill="white" opacity="0.5"/>
+          <!-- Lashes top -->
+          <path d="M 35,49 Q 37,46 40,47" stroke="#1a0a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 38,47 Q 42,44 46,46" stroke="#1a0a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 46,46 Q 50,44 53,47" stroke="#1a0a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 57,47 Q 60,44 64,46" stroke="#1a0a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 64,46 Q 68,44 72,46" stroke="#1a0a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 72,46 Q 74,46 75,49" stroke="#1a0a2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- Eyebrows -->
+          <path d="M 36,44 Q 44,40 52,43" stroke="#1a0a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M 58,43 Q 66,40 74,44" stroke="#1a0a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+          <!-- ── NOSE & MOUTH (happy) ── -->
+          <g id="face-happy">
+            <circle cx="52" cy="61" r="1.5" fill="#e8906a" opacity="0.6"/>
+            <circle cx="58" cy="61" r="1.5" fill="#e8906a" opacity="0.6"/>
+            <!-- Smile -->
+            <path d="M 45,67 Q 55,76 65,67" stroke="#cc4060" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <!-- Teeth -->
+            <path d="M 47,68 Q 55,74 63,68" stroke="none" fill="white" opacity="0.8"/>
+            <!-- Cheek blush -->
+            <ellipse cx="36" cy="63" rx="7" ry="4" fill="#ffaaaa" opacity="0.35"/>
+            <ellipse cx="74" cy="63" rx="7" ry="4" fill="#ffaaaa" opacity="0.35"/>
+          </g>
+
+          <!-- ── FACE (crying) ── -->
+          <g id="face-crying" display="none">
+            <!-- Sad eyebrows -->
+            <path d="M 36,44 Q 44,47 52,44" stroke="#1a0a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M 58,44 Q 66,47 74,44" stroke="#1a0a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- Sad eyes (squint) -->
+            <path d="M 35,54 Q 44,60 53,54" stroke="#5500cc" stroke-width="2" fill="none"/>
+            <path d="M 57,54 Q 66,60 75,54" stroke="#5500cc" stroke-width="2" fill="none"/>
+            <!-- Sad mouth -->
+            <path d="M 45,72 Q 55,65 65,72" stroke="#cc4060" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <!-- Tears -->
+            <ellipse class="tear" cx="42" cy="62" rx="2" ry="6" fill="#88ccff" opacity="0.8"/>
+            <ellipse class="tear" cx="68" cy="62" rx="2" ry="6" fill="#88ccff" opacity="0.8"/>
+            <ellipse class="tear" cx="40" cy="65" rx="1.5" ry="5" fill="#aaddff" opacity="0.6"/>
+          </g>
+
+        </svg>
+      </div>
+
+      <div id="stage-floor"></div>
+    </div>
+  </div>
+
+  <!-- Bottom title -->
+  <div id="bottom-title">
+    <span>— Dance with Blocks —</span>
+  </div>
+
+  <div id="controls">
+    <span class="ctrl"><kbd>←→</kbd> Move</span>
+    <span class="ctrl"><kbd>↑</kbd> Rotate</span>
+    <span class="ctrl"><kbd>↓</kbd> Soft Drop</span>
+    <span class="ctrl"><kbd>Space</kbd> Hard Drop</span>
+    <span class="ctrl"><kbd>P</kbd> Pause</span>
+  </div>
+</div>
+
+<!-- Game Over overlay -->
+<div id="overlay">
+  <h2>GAME OVER</h2>
+  <p id="final-score">Score: 0</p>
+  <button id="restart-btn">PLAY AGAIN</button>
+</div>
+
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const COLS = 10, ROWS = 20, BLOCK = 30;
+const COLORS = [
+  null,
+  '#ff0080', // I - hot pink
+  '#ff00ff', // O - magenta
+  '#cc00ff', // T - purple
+  '#ff69b4', // S - pink
+  '#ff1493', // Z - deep pink
+  '#ff66cc', // J - light pink
+  '#e040fb', // L - violet
+];
+
+const SHAPES = [
+  null,
+  [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
+  [[2,2],[2,2]],                               // O
+  [[0,3,0],[3,3,3],[0,0,0]],                  // T
+  [[0,4,4],[4,4,0],[0,0,0]],                  // S
+  [[5,5,0],[0,5,5],[0,0,0]],                  // Z
+  [[6,0,0],[6,6,6],[0,0,0]],                  // J
+  [[0,0,7],[7,7,7],[0,0,0]],                  // L
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('board-canvas');
+const ctx    = canvas.getContext('2d');
+const nCvs   = document.getElementById('next-canvas');
+const nCtx   = nCvs.getContext('2d');
+
+let board, piece, nextPiece, score, lines, level, gameOver, paused, dropInterval, lastTime, animId;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  board        = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+  score        = 0; lines = 0; level = 1;
+  gameOver     = false; paused = false;
+  dropInterval = 800;
+  lastTime     = 0;
+
+  nextPiece = randomPiece();
+  spawnPiece();
+  updateUI();
+  document.getElementById('overlay').classList.remove('show');
+  setCharState('idle');
+  if (animId) cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(loop);
+}
+
+function randomPiece() {
+  const type = Math.floor(Math.random() * 7) + 1;
+  return { type, shape: SHAPES[type].map(r => [...r]), x: 3, y: 0 };
+}
+
+function spawnPiece() {
+  piece = { ...nextPiece, x: 3, y: 0 };
+  nextPiece = randomPiece();
+  if (collide(piece)) {
+    triggerGameOver();
+  }
+}
+
+// ─── Collision ────────────────────────────────────────────────────────────────
+function collide(p) {
+  for (let r = 0; r < p.shape.length; r++)
+    for (let c = 0; c < p.shape[r].length; c++)
+      if (p.shape[r][c]) {
+        const nx = p.x + c, ny = p.y + r;
+        if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+        if (ny >= 0 && board[ny][nx]) return true;
+      }
+  return false;
+}
+
+// ─── Rotation ─────────────────────────────────────────────────────────────────
+function rotate(shape) {
+  const n = shape.length;
+  return shape[0].map((_, i) => shape.map(row => row[i]).reverse());
+}
+
+function tryRotate() {
+  const orig = piece.shape;
+  piece.shape = rotate(piece.shape);
+  if (collide(piece)) {
+    piece.x--; if (collide(piece)) { piece.x += 2; if (collide(piece)) { piece.x--; piece.shape = orig; } }
+  }
+}
+
+// ─── Lock & Clear ─────────────────────────────────────────────────────────────
+function lock() {
+  piece.shape.forEach((row, r) =>
+    row.forEach((v, c) => {
+      if (v && piece.y + r >= 0) board[piece.y + r][piece.x + c] = v;
+    })
+  );
+  clearLines();
+  spawnPiece();
+}
+
+function clearLines() {
+  let cleared = 0;
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r].every(v => v)) {
+      board.splice(r, 1);
+      board.unshift(Array(COLS).fill(0));
+      cleared++;
+      r++;
+    }
+  }
+  if (cleared) {
+    const pts = [0, 100, 300, 500, 800][cleared] * level;
+    score += pts;
+    lines += cleared;
+    level  = Math.floor(lines / 10) + 1;
+    dropInterval = Math.max(100, 800 - (level - 1) * 70);
+    updateUI();
+    // Flash board
+    canvas.classList.remove('flash');
+    void canvas.offsetWidth;
+    canvas.classList.add('flash');
+    setTimeout(() => canvas.classList.remove('flash'), 400);
+    // Excite character on tetris (4 lines)
+    setCharState(cleared === 4 ? 'excited' : 'dancing');
+  }
+  checkDanger();
+}
+
+// ─── Danger detection ─────────────────────────────────────────────────────────
+function highestRow() {
+  for (let r = 0; r < ROWS; r++)
+    if (board[r].some(v => v)) return r;
+  return ROWS;
+}
+
+function checkDanger() {
+  if (gameOver) return;
+  const h = highestRow();
+  if (h < 7) {
+    setCharState('crying');
+  } else if (charState !== 'excited') {
+    setCharState('dancing');
+  }
+}
+
+// ─── Character state ──────────────────────────────────────────────────────────
+let charState = 'idle';
+let charTimer = null;
+
+function setCharState(state) {
+  charState = state;
+  const el   = document.getElementById('character');
+  const stat = document.getElementById('char-status');
+  const fH   = document.getElementById('face-happy');
+  const fC   = document.getElementById('face-crying');
+
+  el.className = state;
+  if (state === 'crying') {
+    stat.textContent = '😭 Noooo~~ 😭';
+    fH.setAttribute('display', 'none');
+    fC.setAttribute('display', 'block');
+  } else if (state === 'excited') {
+    stat.textContent = '🔥 TETRIS!! 🔥';
+    fH.setAttribute('display', 'block');
+    fC.setAttribute('display', 'none');
+    if (charTimer) clearTimeout(charTimer);
+    charTimer = setTimeout(() => setCharState('dancing'), 2000);
+  } else if (state === 'dancing') {
+    const msgs = ['♪ Let\'s Dance! ♪', '✨ Go! Go! ✨', '💃 Feeling it! 💃', '♫ Yeah! ♫'];
+    stat.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    fH.setAttribute('display', 'block');
+    fC.setAttribute('display', 'none');
+  } else {
+    stat.textContent = '— Ready? —';
+    fH.setAttribute('display', 'block');
+    fC.setAttribute('display', 'none');
+  }
+}
+
+// ─── Drawing ──────────────────────────────────────────────────────────────────
+function drawBlock(context, x, y, color, sz) {
+  sz = sz || BLOCK;
+  // Main fill
+  context.fillStyle = color;
+  context.fillRect(x + 1, y + 1, sz - 2, sz - 2);
+  // Highlight top-left
+  context.fillStyle = 'rgba(255,255,255,0.35)';
+  context.fillRect(x + 1, y + 1, sz - 2, 4);
+  context.fillRect(x + 1, y + 1, 4, sz - 2);
+  // Shadow bottom-right
+  context.fillStyle = 'rgba(0,0,0,0.3)';
+  context.fillRect(x + 1, y + sz - 5, sz - 2, 4);
+  context.fillRect(x + sz - 5, y + 1, 4, sz - 2);
+  // Glow outline
+  context.strokeStyle = color;
+  context.lineWidth = 0.5;
+  context.shadowColor = color;
+  context.shadowBlur = 6;
+  context.strokeRect(x + 1, y + 1, sz - 2, sz - 2);
+  context.shadowBlur = 0;
+}
+
+function drawBoard() {
+  // Background
+  ctx.fillStyle = 'rgba(10,0,20,0.95)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,0,128,0.08)';
+  ctx.lineWidth = 0.5;
+  for (let c = 0; c <= COLS; c++) {
+    ctx.beginPath(); ctx.moveTo(c * BLOCK, 0); ctx.lineTo(c * BLOCK, ROWS * BLOCK); ctx.stroke();
+  }
+  for (let r = 0; r <= ROWS; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * BLOCK); ctx.lineTo(COLS * BLOCK, r * BLOCK); ctx.stroke();
+  }
+
+  // Locked blocks
+  board.forEach((row, r) =>
+    row.forEach((v, c) => {
+      if (v) drawBlock(ctx, c * BLOCK, r * BLOCK, COLORS[v]);
+    })
+  );
+
+  // Ghost piece
+  if (piece && !gameOver) {
+    const ghost = { ...piece, shape: piece.shape.map(r => [...r]) };
+    while (!collide({ ...ghost, y: ghost.y + 1 })) ghost.y++;
+    ctx.globalAlpha = 0.2;
+    ghost.shape.forEach((row, r) =>
+      row.forEach((v, c) => {
+        if (v) drawBlock(ctx, (ghost.x + c) * BLOCK, (ghost.y + r) * BLOCK, COLORS[v]);
+      })
+    );
+    ctx.globalAlpha = 1;
+  }
+
+  // Active piece
+  if (piece && !gameOver) {
+    piece.shape.forEach((row, r) =>
+      row.forEach((v, c) => {
+        if (v) drawBlock(ctx, (piece.x + c) * BLOCK, (piece.y + r) * BLOCK, COLORS[v]);
+      })
+    );
+  }
+
+  // Pause overlay
+  if (paused) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ff69b4';
+    ctx.font = 'bold 36px Arial Black';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ff0080';
+    ctx.shadowBlur = 20;
+    ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawNext() {
+  nCtx.fillStyle = 'rgba(10,0,20,0.9)';
+  nCtx.fillRect(0, 0, nCvs.width, nCvs.height);
+  if (!nextPiece) return;
+  const sz = 16;
+  const sh = nextPiece.shape;
+  const ox = Math.floor((nCvs.width  - sh[0].length * sz) / 2);
+  const oy = Math.floor((nCvs.height - sh.length    * sz) / 2);
+  sh.forEach((row, r) =>
+    row.forEach((v, c) => {
+      if (v) drawBlock(nCtx, ox + c * sz, oy + r * sz, COLORS[v], sz);
+    })
+  );
+}
+
+// ─── UI ───────────────────────────────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('score-val').textContent = score;
+  document.getElementById('lines-val').textContent = lines;
+  document.getElementById('level-val').textContent = level;
+}
+
+// ─── Game loop ────────────────────────────────────────────────────────────────
+function loop(ts) {
+  if (gameOver) return;
+  const dt = ts - lastTime;
+  if (dt > dropInterval) {
+    lastTime = ts;
+    if (!paused) {
+      piece.y++;
+      if (collide(piece)) { piece.y--; lock(); }
+    }
+  }
+  drawBoard();
+  drawNext();
+  animId = requestAnimationFrame(loop);
+}
+
+function triggerGameOver() {
+  gameOver = true;
+  setCharState('crying');
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('final-score').textContent = 'Score: ' + score;
+}
+
+// ─── Input ────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (gameOver) return;
+  if (e.code === 'KeyP') { paused = !paused; return; }
+  if (paused) return;
+
+  switch (e.code) {
+    case 'ArrowLeft':
+      piece.x--;
+      if (collide(piece)) piece.x++;
+      break;
+    case 'ArrowRight':
+      piece.x++;
+      if (collide(piece)) piece.x--;
+      break;
+    case 'ArrowDown':
+      piece.y++;
+      if (collide(piece)) { piece.y--; lock(); }
+      score++;
+      updateUI();
+      break;
+    case 'ArrowUp':
+      tryRotate();
+      break;
+    case 'Space':
+      e.preventDefault();
+      while (!collide({ ...piece, y: piece.y + 1 })) { piece.y++; score += 2; }
+      updateUI();
+      lock();
+      break;
+  }
+  // Start dancing once player starts playing
+  if (charState === 'idle') setCharState('dancing');
+  checkDanger();
+});
+
+document.getElementById('restart-btn').addEventListener('click', init);
+
+// Auto-start dancing when game starts
+setTimeout(() => { if (charState === 'idle') setCharState('dancing'); }, 1000);
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

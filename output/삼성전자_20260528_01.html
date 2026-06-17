@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼성전자 2026.05.28 - AI ROASTING</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
+  --bg:#f5f6fa; --surface:#ffffff; --surface2:#f0f2f8; --border:#e2e6ef;
+  --text:#1a1d2e; --text2:#5a6180; --accent:#2563eb; --accent2:#7c3aed;
+  --pos:#10b981; --neg:#ef4444; --mix:#f59e0b;
+  --card-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);
+  --nav-h:56px;
+  font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+}
+[data-theme="dark"] {
+  --bg:#0f1117; --surface:#1a1d2e; --surface2:#252840; --border:#2e3354;
+  --text:#e8eaf6; --text2:#8892b0;
+  --card-shadow:0 1px 4px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;min-height:100vh}
+
+/* NAV */
+.sticky-nav{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sticky-nav-inner{display:flex;align-items:center;gap:4px;max-width:1200px;margin:0 auto;padding:0 16px;height:var(--nav-h);overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.sticky-nav-inner::-webkit-scrollbar{display:none}
+.nav-brand{font-weight:800;font-size:15px;color:var(--accent);white-space:nowrap;margin-right:8px}
+.nav-link{padding:6px 12px;border-radius:20px;font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;white-space:nowrap;transition:background .2s,color .2s}
+.nav-link:hover,.nav-link.active{background:var(--accent);color:#fff}
+.nav-spacer{flex:1}
+.theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .2s}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 40%,#7c3aed 100%);color:#fff;padding:56px 16px 48px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em}
+.hero h1{font-size:clamp(32px,6vw,56px);font-weight:900;margin-bottom:8px;letter-spacing:-.02em}
+.hero-sub{font-size:14px;opacity:.75}
+.hero-meta{display:flex;justify-content:center;gap:32px;margin-top:28px;flex-wrap:wrap}
+.hero-meta-item{text-align:center}
+.hero-meta-item .label{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.06em}
+.hero-meta-item .value{font-size:16px;font-weight:700;margin-top:3px}
+
+/* MAIN */
+.main{max-width:1200px;margin:0 auto;padding:0 16px 80px}
+
+/* SECTION */
+.section{padding:52px 0 0}
+.section-header{display:flex;align-items:baseline;gap:12px;margin-bottom:24px}
+.section-num{font-size:13px;font-weight:700;color:var(--accent);opacity:.55}
+.section-title{font-size:clamp(18px,3vw,24px);font-weight:800}
+.section-sub{font-size:13px;color:var(--text2);margin-left:auto}
+
+/* KPI */
+.cards-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:640px){.cards-3{grid-template-columns:1fr}}
+.kpi-card{background:var(--surface);border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-card .label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.kpi-card .amount{font-size:clamp(24px,3.5vw,36px);font-weight:900;margin:10px 0 8px;letter-spacing:-.02em}
+.kpi-card .yoy{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;padding:3px 12px;border-radius:12px}
+.yoy.pos{background:rgba(16,185,129,.12);color:var(--pos)}
+.yoy.neg{background:rgba(239,68,68,.12);color:var(--neg)}
+.insight-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+
+/* CHART */
+.chart-wrap{background:var(--surface);border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border)}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.chart-subtitle{font-size:12px;color:var(--text2);margin-bottom:20px}
+
+/* SEGMENT */
+.seg-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.seg-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .2s}
+.seg-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.seg-table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px}
+.seg-table th{text-align:left;padding:8px 12px;color:var(--text2);font-weight:600;border-bottom:2px solid var(--border);font-size:11px;text-transform:uppercase}
+.seg-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.seg-table tr:last-child td{border-bottom:none}
+.est-badge{font-size:10px;background:var(--mix);color:#fff;border-radius:4px;padding:1px 5px;margin-left:4px}
+
+/* STOCK */
+.stock-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+@media(max-width:640px){.stock-stats{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--surface2);border-radius:12px;padding:16px;text-align:center}
+.stat-card .s-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.stat-card .s-val{font-size:20px;font-weight:800;margin-top:5px}
+
+/* MARKET */
+.market-grid{display:grid;grid-template-columns:220px 1fr;gap:20px}
+@media(max-width:768px){.market-grid{grid-template-columns:1fr}}
+.gauge-wrap{background:var(--surface);border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);text-align:center}
+.analyst-table{background:var(--surface);border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);overflow-x:auto}
+table.at{width:100%;border-collapse:collapse;font-size:13px}
+table.at th{padding:8px 12px;color:var(--text2);font-size:11px;text-transform:uppercase;border-bottom:2px solid var(--border);text-align:left;font-weight:600}
+table.at td{padding:10px 12px;border-bottom:1px solid var(--border)}
+table.at tr:last-child td{border-bottom:none}
+.bull-bear{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+@media(max-width:640px){.bull-bear{grid-template-columns:1fr}}
+.bb-card{background:var(--surface);border-radius:16px;padding:20px;box-shadow:var(--card-shadow);border:1px solid var(--border)}
+.bb-card h4{font-size:13px;font-weight:700;margin-bottom:12px}
+.bb-card h4.bull{color:var(--pos)}
+.bb-card h4.bear{color:var(--neg)}
+.bb-list{list-style:none}
+.bb-list li{font-size:13px;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;line-height:1.5}
+.bb-list li:last-child{border-bottom:none}
+.bb-list li::before{content:'';width:6px;height:6px;border-radius:50%;margin-top:7px;flex-shrink:0}
+.bull .bb-list li::before{background:var(--pos)}
+.bear .bb-list li::before{background:var(--neg)}
+
+/* NEWS */
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.news-card{background:var(--surface);border-radius:16px;padding:20px;box-shadow:var(--card-shadow);border:1px solid var(--border);text-decoration:none;color:inherit;display:block;transition:transform .2s}
+.news-card:hover{transform:translateY(-2px)}
+.news-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.news-src{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase}
+.news-date{font-size:11px;color:var(--text2)}
+.news-sent{width:8px;height:8px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.news-sent.pos{background:var(--pos)}
+.news-sent.neg{background:var(--neg)}
+.news-sent.mix{background:var(--mix)}
+.news-h{font-size:14px;font-weight:700;line-height:1.5;margin-bottom:8px}
+.news-body{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* PERSONA */
+.persona-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.persona-card{background:var(--surface);border-radius:16px;padding:18px 20px;box-shadow:var(--card-shadow);border:1px solid var(--border)}
+.persona-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.persona-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.persona-name{font-size:13px;font-weight:700}
+.persona-style{font-size:11px;color:var(--text2);margin-top:2px}
+.score-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.score-bar{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.score-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.score-num{font-size:16px;font-weight:900;min-width:28px;text-align:right}
+.persona-comment{font-size:12px;color:var(--text2);line-height:1.65}
+.persona-disclaimer{text-align:center;font-size:11px;color:var(--text2);margin-top:20px;padding:12px 16px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)}
+
+/* DISC */
+.disc{font-size:11px;color:var(--text2);margin-top:14px;padding:10px 14px;background:var(--surface2);border-radius:8px;line-height:1.5}
+
+/* FOOTER */
+footer{text-align:center;padding:32px 16px;font-size:12px;color:var(--text2);border-top:1px solid var(--border);margin-top:48px;line-height:1.8}
+
+@media print{.sticky-nav{display:none}.section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<nav class="sticky-nav">
+  <div class="sticky-nav-inner">
+    <span class="nav-brand">삼성전자</span>
+    <a class="nav-link active" href="#sec-kpi">KPI</a>
+    <a class="nav-link" href="#sec-growth">성장</a>
+    <a class="nav-link" href="#sec-segment">사업별</a>
+    <a class="nav-link" href="#sec-stock">주가</a>
+    <a class="nav-link" href="#sec-market">시장</a>
+    <a class="nav-link" href="#sec-news">뉴스</a>
+    <a class="nav-link" href="#sec-persona">투자자</a>
+    <span class="nav-spacer"></span>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">AI Roasting Report · 2026Q1</div>
+  <h1>삼성전자</h1>
+  <div class="hero-sub">2026년 1분기 확정 실적 · 연결(CFS) 기준 · 생성일 2026.05.28</div>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><div class="label">종목코드</div><div class="value">005930</div></div>
+    <div class="hero-meta-item"><div class="label">업종</div><div class="value">반도체·전자</div></div>
+    <div class="hero-meta-item"><div class="label">대표이사</div><div class="value">전영현 · 노태문</div></div>
+    <div class="hero-meta-item"><div class="label">설립일</div><div class="value">1969.01.13</div></div>
+    <div class="hero-meta-item"><div class="label">결산</div><div class="value">12월</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ── 01 KPI ─────────────────────────────────────────── -->
+<section class="section" id="sec-kpi">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2 class="section-title">핵심 KPI</h2>
+    <span class="section-sub">2026년 1분기 확정 · 연결(CFS)</span>
+  </div>
+  <div class="cards-3">
+    <div class="kpi-card">
+      <div class="label">매출액</div>
+      <div class="amount">133.9조</div>
+      <span class="yoy pos">▲ +69.1% YoY</span>
+      <div class="insight-chips">
+        <span class="chip">분기 역대 최고 매출</span>
+        <span class="chip">HBM4 첫 양산 공급</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">영업이익</div>
+      <div class="amount">57.2조</div>
+      <span class="yoy pos">▲ +756.0% YoY</span>
+      <div class="insight-chips">
+        <span class="chip">분기 역대 최대 이익</span>
+        <span class="chip">영업이익률 42.8%</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">당기순이익</div>
+      <div class="amount">47.2조</div>
+      <span class="yoy pos">▲ 흑자 전환</span>
+      <div class="insight-chips">
+        <span class="chip">순이익률 35.3%</span>
+        <span class="chip">EPS 7,123원</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 02 GROWTH ──────────────────────────────────────── -->
+<section class="section" id="sec-growth">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2 class="section-title">성장 기여도</h2>
+    <span class="section-sub">매출 델타 워터폴 · 2025Q1 → 2026Q1</span>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">매출액 YoY 변동 분해 (억원)</div>
+    <div class="chart-subtitle">전년 동기 대비 +54.7조 증가 · DS 반도체 기여 비중 84%</div>
+    <div style="position:relative;height:300px"><canvas id="growthChart"></canvas></div>
+  </div>
+</section>
+
+<!-- ── 03 SEGMENT ─────────────────────────────────────── -->
+<section class="section" id="sec-segment">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2 class="section-title">사업별 매출</h2>
+    <span class="section-sub">부문별 영업실적 비교</span>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">사업부문별 매출 (억원)</div>
+    <div class="chart-subtitle">2025Q1 vs 2026Q1 · DS=반도체, MX=모바일, VD/DA=TV·가전, 하만=전장</div>
+    <div class="seg-filters">
+      <button class="seg-btn active" onclick="filterSeg('all',this)">전체</button>
+      <button class="seg-btn" onclick="filterSeg('DS',this)">DS 반도체</button>
+      <button class="seg-btn" onclick="filterSeg('MX',this)">MX 모바일</button>
+      <button class="seg-btn" onclick="filterSeg('VDDA',this)">VD/DA</button>
+      <button class="seg-btn" onclick="filterSeg('Harman',this)">하만</button>
+    </div>
+    <div style="position:relative;height:340px"><canvas id="segChart"></canvas></div>
+    <table class="seg-table">
+      <thead><tr>
+        <th>부문</th><th>2025Q1 매출</th><th>2026Q1 매출</th><th>YoY</th><th>2026Q1 영업이익</th>
+      </tr></thead>
+      <tbody id="segTableBody"></tbody>
+    </table>
+    <div class="disc">* 2025Q1 부문별 매출은 사내 보도자료 기반 추정치<span class="est-badge">EST</span>. 확정 수치는 삼성전자 사업보고서 참조.</div>
+  </div>
+</section>
+
+<!-- ── 04 STOCK ───────────────────────────────────────── -->
+<section class="section" id="sec-stock">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2 class="section-title">주가 반응</h2>
+    <span class="section-sub">실적발표 전후 30영업일 · KRX 종가 (원)</span>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">삼성전자 주가 추이 (원)</div>
+    <div class="chart-subtitle">● 빨간점 = 1Q 잠정실적 발표일 (2026.04.07)</div>
+    <div style="position:relative;height:300px"><canvas id="stockChart"></canvas></div>
+    <div class="stock-stats" id="stockStats"></div>
+    <div class="disc">주가 데이터는 KRX 종가 기준. 일부 중간 구간은 언론 보도 기준 추정치를 포함합니다.</div>
+  </div>
+</section>
+
+<!-- ── 05 MARKET ──────────────────────────────────────── -->
+<section class="section" id="sec-market">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2 class="section-title">시장 평가</h2>
+    <span class="section-sub">증권사 컨센서스 · 2026년 5월 기준</span>
+  </div>
+  <div class="market-grid">
+    <div class="gauge-wrap">
+      <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:12px">컨센서스</div>
+      <canvas id="gaugeChart" width="180" height="110" style="display:block;margin:0 auto"></canvas>
+      <div style="font-size:24px;font-weight:900;color:var(--pos);margin-top:6px">매수</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px">커버리지 18개 증권사</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">평균 TP: <strong style="color:var(--text)">444,000원</strong></div>
+    </div>
+    <div class="analyst-table">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px">증권사별 목표주가</div>
+      <table class="at">
+        <thead><tr><th>증권사</th><th>의견</th><th>목표주가</th><th>비고</th></tr></thead>
+        <tbody id="analystTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="bull-bear">
+    <div class="bb-card bull">
+      <h4 class="bull">🟢 Bull Case</h4>
+      <ul class="bb-list" id="bullList"></ul>
+    </div>
+    <div class="bb-card bear">
+      <h4 class="bear">🔴 Bear Case</h4>
+      <ul class="bb-list" id="bearList"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── 06 NEWS ────────────────────────────────────────── -->
+<section class="section" id="sec-news">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2 class="section-title">관련 뉴스</h2>
+    <span class="section-sub">실적발표 전후 2주 · 국내 주요 신문사</span>
+  </div>
+  <div class="news-grid" id="newsGrid"></div>
+</section>
+
+<!-- ── 07 PERSONA ─────────────────────────────────────── -->
+<section class="section" id="sec-persona">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2 class="section-title">투자자 시각</h2>
+    <span class="section-sub">13인 페르소나 AI 시뮬레이션</span>
+  </div>
+  <div class="persona-grid" id="personaGrid"></div>
+  <div class="persona-disclaimer">⚠️ 이 평가는 AI가 각 투자자의 공개된 투자 철학을 바탕으로 시뮬레이션한 결과입니다. 실제 해당 인물의 의견이 아니며, 투자 권유가 아닙니다.</div>
+</section>
+
+</div>
+
+<footer>
+  삼성전자 2026Q1 AI Roasting Report &nbsp;·&nbsp; 데이터 출처: DART 전자공시 시스템 (opendart.fss.or.kr)<br>
+  뉴스 출처: 전자신문, 뉴스1, 파이낸셜뉴스, 뉴시스, 서울경제, 한국경제 &nbsp;·&nbsp; 생성일 2026.05.28<br>
+  본 리포트는 참고용이며 투자 권유가 아닙니다.
+</footer>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────
+
+const FIN = {
+  rev26:1338734, rev25:791405,
+  op26:572328,   op25:66853,
+  net26:472253,
+};
+
+const SEGS = [
+  {nm:'DS (반도체)',     cg:'DS',     q25:360000, q25est:true, q26:817000, op26:537000},
+  {nm:'MX (모바일)',     cg:'MX',     q25:355000, q25est:true, q26:381000, op26:28000},
+  {nm:'VD/DA (TV·가전)', cg:'VDDA',  q25:52000,  q25est:true, q26:62000,  op26:2000},
+  {nm:'하만 (전장)',     cg:'Harman', q25:35000,  q25est:true, q26:38000,  op26:2000},
+];
+
+const PRICE_DATA = [
+  {d:'04/01',p:225000},{d:'04/02',p:228000},{d:'04/03',p:224000},{d:'04/04',p:222000},
+  {d:'04/07',p:235000,earnings:true},
+  {d:'04/08',p:248000},{d:'04/09',p:244000},{d:'04/10',p:241000},{d:'04/11',p:238000},
+  {d:'04/14',p:214500},{d:'04/15',p:218000},{d:'04/16',p:221000},{d:'04/17',p:219000},
+  {d:'04/18',p:222000},{d:'04/21',p:220000},{d:'04/22',p:218000},{d:'04/23',p:223000},
+  {d:'04/24',p:226000},{d:'04/25',p:229000},{d:'04/28',p:224000},{d:'04/29',p:222000},
+  {d:'04/30',p:220500},{d:'05/02',p:236000},{d:'05/07',p:255000},{d:'05/08',p:268500},
+  {d:'05/09',p:265000},{d:'05/12',p:272000},{d:'05/13',p:276000},{d:'05/14',p:279000},
+  {d:'05/15',p:281000},
+];
+const EARN_IDX = PRICE_DATA.findIndex(p=>p.earnings);
+
+const ANALYSTS = [
+  {firm:'한국투자증권', op:'매수', tp:'570,000', note:'목표가 54% 상향'},
+  {firm:'미래에셋증권', op:'매수', tp:'550,000', note:'HBM4 슈퍼사이클'},
+  {firm:'KB증권',       op:'매수', tp:'500,000', note:'2026E 영업익 327조'},
+  {firm:'삼성증권',     op:'매수', tp:'450,000', note:'밸류에이션 저평가'},
+  {firm:'신한투자증권', op:'매수', tp:'340,000', note:'메모리 초과수요 지속'},
+  {firm:'NH투자증권',   op:'매수', tp:'320,000', note:'2Q도 실적 개선 전망'},
+];
+
+const NEWS = [
+  {h:'반도체 슈퍼사이클…삼성전자, 1분기 영업이익 \'57조\' 신기록',
+   src:'전자신문', date:'2026.04.07', sent:'pos',
+   url:'https://www.etnews.com/20260407000181',
+   body:'삼성전자가 2026년 1분기 잠정 영업이익 57조2000억원을 기록, 분기 기준 사상 최대 실적을 달성했다. HBM4 첫 양산 공급과 AI 메모리 수요 급증이 핵심 요인으로 분석된다.'},
+  {h:'삼성전자 1Q 영업익 57.2조 \'새 역사\'…반도체만 53.7조 벌었다',
+   src:'뉴스1', date:'2026.04.30', sent:'pos',
+   url:'https://www.news1.kr/industry/general-industry/6153590',
+   body:'삼성전자의 2026년 1분기 확정 영업이익이 57조2328억원으로 집계됐다. DS부문 홀로 53조7000억원을 벌어들이며 전체 실적을 주도했고, MX·VD/DA 부문도 고르게 선방했다.'},
+  {h:'\'역대급 실적\'에 날개 단 삼성전자…증권가 목표가 줄상향',
+   src:'파이낸셜뉴스', date:'2026.04.07', sent:'pos',
+   url:'https://www.fnnews.com/news/202604071536310401',
+   body:'삼성전자의 깜짝 실적에 증권가가 일제히 목표주가를 상향했다. 한국투자증권은 57만원, 미래에셋증권은 55만원을 제시하며 40만전자 돌파가 가시권에 들어왔다고 평가했다.'},
+  {h:'"57조 벌어도 주가는 제자리"…삼성전자, 低평가 언제까지',
+   src:'뉴시스', date:'2026.04.13', sent:'mix',
+   url:'https://www.newsis.com/view/NISX20260413_0003589402',
+   body:'실적발표 이후 삼성전자 주가가 오히려 하락하며 저평가 논란이 재점화됐다. AI 반도체 실적은 역대급이지만 시총 대비 PER이 경쟁사 대비 현저히 낮아 코리아 디스카운트가 지속된다는 분석이 나왔다.'},
+  {h:'삼성전자, HBM4 올해 물량 완판…장기공급계약 추진 중',
+   src:'뉴스1', date:'2026.04.30', sent:'pos',
+   url:'https://www.news1.kr/industry/general-industry/6154059',
+   body:'삼성전자가 HBM4 올해 생산 물량을 이미 완판했으며 주요 AI 빅테크와 장기공급계약 체결을 추진 중이다. HBM4 공급가는 전작 대비 약 30% 높은 700달러(약 100만원)대로 알려졌다.'},
+  {h:'\'HBM 전환 가속화\'…삼성전자, 메모리 반도체 수익성 대폭 키웠다',
+   src:'뉴시스', date:'2026.04.30', sent:'pos',
+   url:'https://www.newsis.com/view/NISX20260430_0003612604',
+   body:'삼성전자가 범용 D램에서 HBM·고용량 모듈 등 고부가가치 제품으로 포트폴리오를 빠르게 전환했다. 메모리 영업이익률은 66%로 엔비디아·TSMC를 넘어서며 글로벌 최고 수준에 진입했다.'},
+  {h:'삼성전자 더 오를까?..."주가 상승세 당분간 지속"',
+   src:'서울경제', date:'2026.05.09', sent:'pos',
+   url:'https://www.sedaily.com/article/20004591',
+   body:'증권가는 삼성전자 주가 상승세가 2분기에도 이어질 것으로 전망했다. AI 서버용 HBM 수요가 연간 50% 이상 증가하는 구조적 성장이 뒷받침되고 있으며, 2027년 영업이익 133조 전망도 제시됐다.'},
+  {h:'[삼성전자 분석] 2분기 실적 추가 개선 기대…"메모리 가격 지켜봐야"',
+   src:'한국경제', date:'2026.04.30', sent:'mix',
+   url:'https://www.hankyung.com/article/202604308081i',
+   body:'삼성전자의 2분기 실적도 전분기 대비 개선이 기대되나, 메모리 현물 가격 조정 여부가 관건이라는 분석이다. DDR5 등 범용 메모리 가격 변동성에 대한 경계론도 제기됐다.'},
+];
+
+const BULLS = [
+  'HBM4 세계 최초 양산 공급으로 엔비디아 등 AI 빅테크향 프리미엄 가격 확보',
+  'AI 서버 증설 사이클이 2027년까지 지속되며 HBM 연간 수요 50% 이상 증가 전망',
+  '반도체(DS) 영업이익률 66%로 글로벌 최고 수준 진입, 수익성 구조 질적 개선',
+  '갤럭시S26 Ultra 판매 비중 확대로 MX 부문 ASP 상승 및 수익성 방어',
+  '57조 현금창출력 대비 시총 저평가, 자사주 매입·배당 확대 시 주주환원 폭발적 증가 기대',
+];
+const BEARS = [
+  '반도체 사이클 특성상 HBM 공급 과잉 전환 시 영업이익 급락 위험 상존',
+  '삼성전자 지배구조 리스크 및 코리아 디스카운트로 밸류에이션 할인 지속',
+  '미중 기술전쟁 심화 시 중국 수출 제한 강화로 매출 감소 가능성',
+  'TSMC·SK하이닉스 대비 파운드리·HBM 기술 격차 우려가 시장의 할인 요인으로 잔존',
+  'DDR5 등 범용 메모리 현물 가격 하락 조정 시 전체 매출 믹스 저하 우려',
+];
+
+const PERSONAS = [
+  {name:'워런 버핏',        en:'Warren Buffett',        emoji:'🎩', style:'장기 가치 · 경제적 해자', score:6, color:'#0ea5e9',
+   comment:'반도체 비즈니스의 자본 집약적 특성과 사이클 변동성은 내 투자 방식과 거리가 있다. 그러나 HBM 독점 공급력과 57조 현금창출력은 부인하기 어렵다. 합리적인 가격이라면 보유 가능하다.'},
+  {name:'피터 린치',        en:'Peter Lynch',            emoji:'📈', style:'성장주 합리적 가격', score:8, color:'#22c55e',
+   comment:'PEG 비율이 0.1 미만이다. 영업이익이 756% 뛰었는데 주가는 그 절반도 못 올랐다. 이게 바로 내가 찾는 텐배거 후보다. HBM이라는 스토리는 단순하고 명확하다.'},
+  {name:'벤저민 그레이엄',  en:'Benjamin Graham',        emoji:'📚', style:'안전마진 · 순자산 가치', score:5, color:'#f59e0b',
+   comment:'반도체 사이클 정점 가능성이 우려된다. P/B 2.2배는 그레이엄 기준으로 저렴하지만, 순이익의 사이클 지속성을 확인하기 전에는 적극 매수를 권하기 어렵다.'},
+  {name:'필립 피셔',        en:'Philip Fisher',          emoji:'🔬', style:'성장 기업 · R&D 우위', score:8, color:'#6366f1',
+   comment:'R&D 투자 강도, HBM4 세계 최초 양산, AI 수요 구조 변화. 이 세 가지가 피셔의 투자 요소를 충족한다. 장기 성장 궤도에 오른 회사로 평가한다.'},
+  {name:'찰리 멍거',        en:'Charlie Munger',          emoji:'🦉', style:'우량 기업 · 합리적 가격', score:7, color:'#8b5cf6',
+   comment:'기술 집약적 제조업에서 글로벌 1위를 유지하는 것은 쉬운 일이 아니다. 삼성의 수직계열화와 실행력은 평가받아야 한다. 다만 지배구조 리스크는 여전히 할인 요소다.'},
+  {name:'캐시 우드',        en:'Cathie Wood',             emoji:'🚀', style:'파괴적 혁신 · AI', score:9, color:'#ec4899',
+   comment:'AI 반도체가 내 핵심 테제다. HBM4는 AI 시대의 핵심 인프라이고, 삼성전자는 이 메가트렌드에서 가장 직접적인 수혜주다. 목표주가를 크게 상향해야 할 시점이다.'},
+  {name:'빌 애크먼',        en:'Bill Ackman',             emoji:'⚔️', style:'행동주의 · 집중 투자', score:7, color:'#f97316',
+   comment:'57조 영업이익에 비해 시총이 현저히 낮다. 자사주 매입 규모를 대폭 확대하면 주가는 즉각 반응할 것이다. 이사회에 주주환원 강화를 요구할 만한 케이스다.'},
+  {name:'마이클 버리',      en:'Michael Burry',           emoji:'🐻', style:'역발상 · 꼬리 리스크', score:4, color:'#ef4444',
+   comment:'모두가 HBM을 외칠 때가 가장 위험하다. 반도체 CAPEX 과잉투자 사이클은 역사적으로 급격한 공급 과잉으로 이어진다. AI 버블 붕괴 시 낙폭이 가장 클 종목 중 하나다.'},
+  {name:'나심 탈레브',      en:'Nassim Taleb',            emoji:'🦢', style:'반취약성 · 블랙스완', score:3, color:'#64748b',
+   comment:'AI 수요가 영원할 것이라는 가정이 이 주식 밸류에이션 전부에 깔려 있다. 지정학 리스크, 미중 기술전쟁, AI 규제 가능성 등 꼬리 위험이 너무 집중돼 있다.'},
+  {name:'모니쉬 파브라이',  en:'Mohnish Pabrai',          emoji:'🎯', style:'버핏 방식 · 저평가 클론', score:7, color:'#0ea5e9',
+   comment:'버핏의 방식을 따라가면 답이 나온다. 57조 이익 기업이 이 가격에 거래된다는 것은 시장이 착오를 범하고 있다는 신호다. 안전마진이 충분하다고 판단한다.'},
+  {name:'스탠 드러켄밀러',  en:'Stanley Druckenmiller',   emoji:'📊', style:'매크로 · 모멘텀', score:8, color:'#10b981',
+   comment:'AI CAPEX 슈퍼사이클은 2027년까지 지속될 것이다. 삼성전자는 이 흐름에서 가장 강한 수혜주 중 하나다. 모멘텀이 유효한 동안은 포지션을 유지한다.'},
+  {name:'라케시 중훈왈라',  en:'Rakesh Jhunjhunwala',     emoji:'🐘', style:'아시아 성장주 · 장기 보유', score:8, color:'#a855f7',
+   comment:'아시아에서 삼성전자 같은 회사는 다시 나오기 어렵다. 글로벌 AI 혁명의 핵심 공급망에 위치하며 합리적 밸류에이션을 유지하고 있다. 10년 보유 관점에서 최선의 선택 중 하나다.'},
+  {name:'아스워스 다모다란', en:'Aswath Damodaran',        emoji:'🔢', style:'내재가치 DCF · 팩트 기반', score:7, color:'#14b8a6',
+   comment:'DCF 모델 기준으로 현재 주가는 내재가치 대비 30~40% 할인된 구간이다. 터미널 밸류 산정 시 사이클 정상화 가정이 필수적이며, 이 불확실성을 감안해도 매력적인 수준이다.'},
+];
+
+// ── THEME ─────────────────────────────────────────────────────────────
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', isDark?'light':'dark');
+  document.getElementById('themeBtn').textContent = isDark?'🌙':'☀️';
+  setTimeout(drawAll, 60);
+}
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+// ── CHARTS ────────────────────────────────────────────────────────────
+let charts = {};
+
+function drawGrowth(){
+  if(charts.growth) charts.growth.destroy();
+  const ctx = document.getElementById('growthChart').getContext('2d');
+  const dsD = 817000-360000, mxD = 381000-355000, otherD = (FIN.rev26-FIN.rev25)-dsD-mxD;
+  const vals = [FIN.rev25, dsD, mxD, otherD, FIN.rev26];
+  const bases= [0, FIN.rev25, FIN.rev25+dsD, FIN.rev25+dsD+mxD, 0];
+  const cols = [css('--accent'), css('--pos'), '#22d3ee', css('--mix'), css('--accent2')];
+  const labels=['2025Q1 매출','DS 기여','MX 기여','기타 기여','2026Q1 매출'];
+  const maxV = Math.ceil(Math.max(...vals.map((v,i)=>bases[i]+v))*1.18/100000)*100000;
+
+  charts.growth = new Chart(ctx,{
+    type:'bar', plugins:[ChartDataLabels],
+    data:{labels, datasets:[{data:vals, backgroundColor:cols, base:bases, borderRadius:6}]},
+    options:{
+      clip:false, layout:{padding:{top:44}},
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${(c.raw/10000).toFixed(1)}조원`}},
+        datalabels:{anchor:'end',align:'top',color:css('--text'),font:{size:11,weight:'700'},
+          formatter:v=>`${(v/10000).toFixed(1)}조`}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:css('--text2'),font:{size:11}}},
+        y:{max:maxV,grid:{color:css('--border')},ticks:{color:css('--text2'),font:{size:11},
+          callback:v=>`${(v/10000).toFixed(0)}조`}}
+      }
+    }
+  });
+}
+
+let currentSeg='all';
+function filterSeg(cg, btn){
+  currentSeg=cg;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawSeg();
+}
+
+function drawSeg(){
+  if(charts.seg) charts.seg.destroy();
+  const ctx = document.getElementById('segChart').getContext('2d');
+  const data = currentSeg==='all' ? SEGS : SEGS.filter(s=>s.cg===currentSeg);
+  const _allVals = data.flatMap(s=>[s.q25,s.q26]).filter(Boolean);
+  const _segMax  = Math.ceil(Math.max(..._allVals)*1.22/10000)*10000;
+
+  charts.seg = new Chart(ctx,{
+    type:'bar', plugins:[ChartDataLabels],
+    data:{
+      labels:data.map(s=>s.nm),
+      datasets:[
+        {label:'2025Q1', data:data.map(s=>s.q25), backgroundColor:css('--border'), borderRadius:5},
+        {label:'2026Q1', data:data.map(s=>s.q26), backgroundColor:css('--accent'), borderRadius:5},
+      ]
+    },
+    options:{
+      clip:false, layout:{padding:{top:44}},
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:css('--text'),font:{size:12}}},
+        datalabels:{anchor:'end',align:'top',color:css('--text'),font:{size:10,weight:'700'},
+          formatter:v=>`${(v/10000).toFixed(1)}조`}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:css('--text2'),font:{size:11}}},
+        y:{max:_segMax,grid:{color:css('--border')},ticks:{color:css('--text2'),font:{size:11},
+          callback:v=>`${(v/10000).toFixed(0)}조`}}
+      }
+    }
+  });
+
+  const tbody = document.getElementById('segTableBody');
+  tbody.innerHTML = '';
+  data.forEach(s=>{
+    const yoy = s.q25>0 ? ((s.q26-s.q25)/s.q25*100).toFixed(1) : 'N/A';
+    const up = parseFloat(yoy)>=0;
+    tbody.innerHTML+=`<tr>
+      <td><strong>${s.nm}</strong></td>
+      <td>${(s.q25/10000).toFixed(1)}조${s.q25est?'<span class="est-badge">EST</span>':''}</td>
+      <td><strong>${(s.q26/10000).toFixed(1)}조</strong></td>
+      <td><span class="yoy ${up?'pos':'neg'}">${up?'▲':'▼'} ${yoy}%</span></td>
+      <td>${(s.op26/10000).toFixed(1)}조</td>
+    </tr>`;
+  });
+}
+
+function drawStock(){
+  if(charts.stock) charts.stock.destroy();
+  const ctx = document.getElementById('stockChart').getContext('2d');
+  const prices = PRICE_DATA.map(d=>d.p);
+  const minP = Math.floor(Math.min(...prices)*0.96/1000)*1000;
+  const maxP = Math.ceil(Math.max(...prices)*1.04/1000)*1000;
+  const ptBG = PRICE_DATA.map((_,i)=>i===EARN_IDX?'#ef4444':css('--accent')+'44');
+  const ptR  = PRICE_DATA.map((_,i)=>i===EARN_IDX?7:3);
+
+  charts.stock = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:PRICE_DATA.map(d=>d.d),
+      datasets:[{
+        data:prices,
+        borderColor:css('--accent'),
+        backgroundColor:css('--accent')+'1a',
+        borderWidth:2, fill:true, tension:0.35,
+        pointBackgroundColor:ptBG, pointRadius:ptR,
+        pointBorderColor:PRICE_DATA.map((_,i)=>i===EARN_IDX?'#ef4444':css('--accent')),
+        pointBorderWidth:2,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString()}원`}},
+        datalabels:{display:false}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:css('--text2'),font:{size:10},maxTicksLimit:10}},
+        y:{min:minP,max:maxP,grid:{color:css('--border')},ticks:{color:css('--text2'),font:{size:11},
+          callback:v=>`${(v/1000).toFixed(0)}K`}}
+      }
+    }
+  });
+
+  const first=prices[0],last=prices[prices.length-1];
+  const earnP=prices[EARN_IDX], nextP=prices[EARN_IDX+1]||earnP;
+  document.getElementById('stockStats').innerHTML=`
+    <div class="stat-card"><div class="s-label">기간 수익률</div>
+      <div class="s-val" style="color:var(--pos)">+${((last-first)/first*100).toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="s-label">최고가</div>
+      <div class="s-val">${Math.max(...prices).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="s-label">최저가</div>
+      <div class="s-val">${Math.min(...prices).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="s-label">발표 익일 반응</div>
+      <div class="s-val" style="color:var(--pos)">+${((nextP-earnP)/earnP*100).toFixed(1)}%</div></div>`;
+}
+
+function drawGauge(){
+  if(charts.gauge) charts.gauge.destroy();
+  const ctx = document.getElementById('gaugeChart').getContext('2d');
+  charts.gauge = new Chart(ctx,{
+    type:'doughnut',
+    plugins:[ChartDataLabels],
+    data:{datasets:[{data:[16,2,0],backgroundColor:['#10b981','#f59e0b','#ef4444'],
+      borderWidth:0,circumference:180,rotation:270}]},
+    options:{responsive:false,
+      plugins:{legend:{display:false},datalabels:{display:false},tooltip:{enabled:false}},
+      cutout:'62%'}
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────
+function renderAnalysts(){
+  document.getElementById('analystTableBody').innerHTML = ANALYSTS.map(a=>`
+    <tr>
+      <td><strong>${a.firm}</strong></td>
+      <td><span style="color:var(--pos);font-weight:700">${a.op}</span></td>
+      <td><strong>${a.tp}원</strong></td>
+      <td style="color:var(--text2)">${a.note}</td>
+    </tr>`).join('');
+}
+
+function renderBullBear(){
+  document.getElementById('bullList').innerHTML = BULLS.map(b=>`<li>${b}</li>`).join('');
+  document.getElementById('bearList').innerHTML = BEARS.map(b=>`<li>${b}</li>`).join('');
+}
+
+function renderNews(){
+  document.getElementById('newsGrid').innerHTML = NEWS.map(n=>`
+    <a class="news-card" href="${n.url}" target="_blank" rel="noopener noreferrer">
+      <div class="news-meta">
+        <span class="news-src">${n.src}</span>
+        <span class="news-date">${n.date}</span>
+        <span class="news-sent ${n.sent}"></span>
+      </div>
+      <div class="news-h">${n.h}</div>
+      <div class="news-body">${n.body}</div>
+    </a>`).join('');
+}
+
+function renderPersonas(){
+  document.getElementById('personaGrid').innerHTML = PERSONAS.map(p=>{
+    const sc = p.score>=7?'var(--pos)':p.score>=5?'var(--mix)':'var(--neg)';
+    return `<div class="persona-card">
+      <div class="persona-top">
+        <div class="persona-avatar" style="background:${p.color}22">${p.emoji}</div>
+        <div>
+          <div class="persona-name">${p.name}</div>
+          <div class="persona-style">${p.style}</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap">
+        <div class="score-bar"><div class="score-fill" style="width:${p.score*10}%;background:${sc}"></div></div>
+        <div class="score-num" style="color:${sc}">${p.score}</div>
+      </div>
+      <div class="persona-comment">${p.comment}</div>
+    </div>`;
+  }).join('');
+}
+
+function initNav(){
+  const secs = document.querySelectorAll('.section');
+  const links = document.querySelectorAll('.nav-link');
+  new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        const m = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+        if(m) m.classList.add('active');
+      }
+    });
+  },{rootMargin:'-40% 0px -55% 0px'}).observe && secs.forEach(s=>{
+    new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          links.forEach(l=>l.classList.remove('active'));
+          const m = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+          if(m) m.classList.add('active');
+        }
+      });
+    },{rootMargin:'-40% 0px -55% 0px'}).observe(s);
+  });
+}
+
+function drawAll(){
+  drawGrowth(); drawSeg(); drawStock(); drawGauge();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  Chart.register(ChartDataLabels);
+  renderAnalysts(); renderBullBear(); renderNews(); renderPersonas();
+  drawAll(); initNav();
+});
+</script>
+</body>
+</html>

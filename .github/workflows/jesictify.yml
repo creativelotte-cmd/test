@@ -1,0 +1,50 @@
+name: Jesictify hourly collect
+
+on:
+  schedule:
+    - cron: "7 * * * *"      # every hour at :07 (UTC clock; GitHub may start a few minutes late)
+  workflow_dispatch:          # manual "Run workflow" button
+
+permissions:
+  contents: write             # needed to commit the collected data
+
+concurrency:
+  group: jesictify-collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Keep line endings as-is
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+
+      - name: Use Korea time (KST) for timestamps
+        shell: powershell
+        run: tzutil /s "Korea Standard Time"
+
+      - name: Collect chart and rebuild dataset
+        shell: powershell
+        working-directory: jesictify
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-all.ps1
+
+      - name: Show collector log
+        if: always()
+        shell: powershell
+        working-directory: jesictify
+        run: if (Test-Path .\logs\collector.log) { Get-Content .\logs\collector.log -Tail 20 }
+
+      - name: Commit updated data
+        shell: powershell
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jesictify/data jesictify/web/data.js
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { Write-Output "No data changes"; exit 0 }
+          git commit -m "Jesictify data update $(Get-Date -Format 'yyyy-MM-dd HH:mm') KST"
+          git pull --rebase origin main
+          git push origin HEAD:main

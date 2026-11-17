@@ -1,0 +1,6 @@
+{
+  "approved": false,
+  "geo": "KR",
+  "days": 30,
+  "note": "Google Trends API (alpha) access applied 2026-11-17. When the approval email arrives, set approved=true and implement the call in scripts/collect-google.ps1 following the email's instructions. Put credentials in user environment variables, not in this file."
+}

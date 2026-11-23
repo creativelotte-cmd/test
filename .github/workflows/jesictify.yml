@@ -29,6 +29,9 @@ jobs:
       - name: Collect chart and rebuild dataset
         shell: powershell
         working-directory: jesictify
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-all.ps1
 
       - name: Show collector log

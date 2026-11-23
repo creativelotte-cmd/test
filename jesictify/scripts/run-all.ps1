@@ -8,6 +8,6 @@
 & (Join-Path $PSScriptRoot 'build-data.ps1')
 
 # Weekly history: failures here must never break the page update above
-foreach ($s in 'collect-weekly.ps1', 'collect-naver-weekly.ps1', 'build-weekly.ps1') {
+foreach ($s in 'collect-weekly.ps1', 'collect-naver-weekly.ps1', 'build-weekly.ps1', 'analyze.ps1') {
     try { & (Join-Path $PSScriptRoot $s) } catch { Write-Log "ERROR $s : $($_.Exception.Message)" }
 }

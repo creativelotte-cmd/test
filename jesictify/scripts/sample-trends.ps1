@@ -7,8 +7,8 @@ param([int]$Days = 30)
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 $existing = @(Read-CsvSafe $TrendsCsv)
-if ($existing | Where-Object { $_.source -eq 'google_trends' } | Select-Object -First 1) {
-    Write-Log 'SKIP sample trends: real Google data present'
+if ($existing | Where-Object { $_.source -ne 'sample' } | Select-Object -First 1) {
+    Write-Log 'SKIP sample trends: real search data present'
     return
 }
 $targets = @(Get-SearchTargets)

@@ -38,10 +38,10 @@ $dataset = [ordered]@{
         generated_at   = (Get-Date).ToString('yyyy-MM-ddTHH:mm:sszzz')
         chart_source   = 'Hanteo Chart realtime digital chart (top 20) https://www.hanteochart.com/ko/charts/digital/real'
         chart_metric   = 'score = Hanteo digital index (eumwon jisu)'
-        search_source  = 'Google Trends API (alpha), geo KR, daily, last 30 days (approval pending)'
+        search_source  = 'Naver DataLab search trend (NAVER API HUB), daily, last 30 days'
         search_is_sample = ($trendSources -contains 'sample')
-        search_has_data  = ($trendSources -contains 'google_trends')
-        search_note    = 'interest = Google relative search interest (consistently scaled across requests), not absolute counts; latest date lags about 2 days; rows with source=sample are placeholder data'
+        search_has_data  = ($trendSources -contains 'naver_datalab')
+        search_note    = 'interest = Naver relative search volume; anchor keyword (config/naver.json, default IU) 30-day daily average = 100, so values are comparable across artists and songs; not absolute counts; latest date = yesterday; song keyword = "artist title" + "title artist"; rows with source=sample are placeholder data'
         snapshot_count = @($chart | Select-Object -ExpandProperty chart_time -Unique).Count
     }
     latest_chart  = [ordered]@{ chart_time = $latestTime; entries = $latest }

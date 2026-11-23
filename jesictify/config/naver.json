@@ -1,0 +1,6 @@
+{
+    "api_mode":  "hub",
+    "anchor_keyword":  "아이유",
+    "days":  30,
+    "note":  "Keys are NOT stored here. Local PC: user env vars NAVER_CLIENT_ID / NAVER_CLIENT_SECRET (scripts/set-naver-keys.ps1). GitHub Actions: repository secrets with the same names."
+}

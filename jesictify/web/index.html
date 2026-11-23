@@ -235,7 +235,7 @@
 
       <footer id="about">
         음원 순위: 한터차트 실시간 음원차트 (hanteochart.com) · 음원 지수 = 한터 디지털 지수<br>
-        검색 관심도: Google Trends API (대한민국, 일간, 최근 30일) · 상대 관심도이며 절대 검색 횟수가 아닙니다 · 최신값은 약 2일 지연<br>
+        검색량: 네이버 데이터랩 검색어 트렌드 (NAVER API HUB, 일간, 최근 30일) · 기준 검색어(아이유) 30일 평균 = 100인 상대값이며 절대 검색 횟수가 아닙니다 · 최신값은 어제<br>
         곡 검색어는 "가수 곡명"입니다 (With, BAD처럼 곡명만으로는 다른 뜻과 섞이기 때문)<br>
         분석용 데이터: <code>data/eumwon-daily.json</code>, <code>data/*.csv</code>
       </footer>
@@ -293,11 +293,11 @@
   $('trackCount').textContent = entries.length;
   $('snapCount').textContent = fmt(D.meta.snapshot_count);
   $('genAt').textContent = fmtTime(D.meta.generated_at).slice(5);
-  $('searchBadge').textContent = isSample ? '검색: 샘플 데이터' : '검색: Google Trends';
+  $('searchBadge').textContent = isSample ? '검색: 샘플 데이터' : '검색: 네이버 트렌드';
   if (!isSample) $('searchBadge').classList.add('live');
   if (isSample) {
     $('sampleNotice').hidden = false;
-    $('sampleNotice').innerHTML = '검색 관심도는 현재 <b>샘플 데이터</b>입니다. Google Trends API 승인 후 실제 값으로 교체됩니다.';
+    $('sampleNotice').innerHTML = '검색 관심도는 현재 <b>샘플 데이터</b>입니다. 네이버 데이터랩 수집이 시작되면 실제 값으로 교체됩니다.';
   }
 
   // highlight cards
@@ -361,7 +361,7 @@
     const f1 = (v) => v == null ? '-' : fmt(v, v < 10 ? 2 : 1);
     $('detail').innerHTML = `
       <div class="now-in">
-        <div class="now-h">곡 상세<span>구글 검색 관심도${sampleTag}</span></div>
+        <div class="now-h">곡 상세<span>네이버 검색량${sampleTag}</span></div>
         ${coverHtml(e, 'now-art').replace('loading="lazy" ', '')}
         <div class="now-title">${esc(e.title)}</div>
         <div class="now-artist">${esc(e.artist)}</div>

@@ -63,7 +63,10 @@ if (-not $Force) {
     $have = @{}
     foreach ($r in $existing) { if ($r.source -eq 'naver_datalab' -and $r.fetched_at -like "$today*") { $have["$($r.target_type)|$($r.artist)|$($r.title)"] = $true } }
     $missing = @($targets | Where-Object { -not $have.ContainsKey("$($_.target_type)|$($_.artist)|$($_.title)") })
-    if (-not $missing.Count) { Write-Log 'SKIP naver: all current targets already fetched today'; return }
+    $yday = (Get-Date).Date.AddDays(-1).ToString('yyyy-MM-dd')
+    $hasYday = $existing | Where-Object { $_.source -eq 'naver_datalab' -and $_.date -eq $yday } | Select-Object -First 1
+    if (-not $missing.Count -and $hasYday) { Write-Log 'SKIP naver: all current targets already fetched today'; return }
+    if (-not $missing.Count) { $Force = $true }   # fetched today, but yesterday was not aggregated yet: try again
 }
 
 # --- query Naver DataLab ---
@@ -112,7 +115,9 @@ for ($i = 0; $i -lt $targets.Count; $i += 4) {
         $m = @{}; foreach ($p in $g.data) { $m[$p.period] = [double]$p.ratio }
         $series[$g.title] = $m
     }
-    $dates = @(); for ($d = $startDate; $d -le $endDate; $d = $d.AddDays(1)) { $dates += $d.ToString('yyyy-MM-dd') }
+    # Only days Naver has already aggregated: a day missing from the anchor series (e.g. yesterday,
+    # early in the morning) would otherwise be stored as 0 for everyone and drag the anchor mean down
+    $dates = @($series['anchor'].Keys | Sort-Object)
     $anchorVals = @($dates | ForEach-Object { if ($series['anchor'].ContainsKey($_)) { $series['anchor'][$_] } else { 0 } })
     $anchorMean = ($anchorVals | Measure-Object -Average).Average
     if (-not $anchorMean) { Write-Log "ERROR naver: anchor keyword returned no data"; exit 1 }
@@ -134,8 +139,10 @@ for ($i = 0; $i -lt $targets.Count; $i += 4) {
 
 # Replace stored naver rows for the refreshed targets; drop old SAMPLE rows entirely
 $refreshed = @{}; foreach ($t in $targets) { $refreshed["$($t.target_type)|$($t.artist)|$($t.title)"] = $true }
+$lastDay = @($newRows | Select-Object -ExpandProperty date | Sort-Object)[-1]
 $keep = @($existing | Where-Object {
-    $_.source -ne 'sample' -and -not ($_.source -eq 'naver_datalab' -and $refreshed.ContainsKey("$($_.target_type)|$($_.artist)|$($_.title)"))
+    $_.source -ne 'sample' -and -not ($_.source -eq 'naver_datalab' -and $refreshed.ContainsKey("$($_.target_type)|$($_.artist)|$($_.title)")) -and
+    -not ($_.source -eq 'naver_datalab' -and $lastDay -and $_.date -gt $lastDay)   # older runs' not-yet-aggregated days
 } | ForEach-Object {
     [pscustomobject]@{ date = $_.date; target_type = $_.target_type; artist = $_.artist; title = $_.title; keyword = $_.keyword
         geo = $_.geo; interest = $_.interest; source = $_.source; fetched_at = $_.fetched_at }

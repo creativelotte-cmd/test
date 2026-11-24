@@ -23,7 +23,8 @@ $names = @(@(Read-CsvSafe $WeeklyCsv) + @(Read-CsvSafe $ChartCsv) | Select-Objec
 if (-not $names.Count) { Write-Log 'SKIP naver weekly: no chart data'; return }
 
 # --- refresh rule: once per ISO week, plus any artist not fetched yet ---
-$today = (Get-Date).Date
+# Reference day = yesterday, so on a Monday the just-ended week (Sunday not fully aggregated yet) is not fetched
+$today = (Get-Date).Date.AddDays(-1)
 $thisMonday = $today.AddDays(-(([int]$today.DayOfWeek + 6) % 7))
 $existing = @(Read-CsvSafe $SearchWeeklyCsv)
 $fetchedThisWeek = @{}

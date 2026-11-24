@@ -8,8 +8,10 @@ param([switch]$NoBuild)
 $Url = 'https://www.hanteochart.com/ko/charts/digital/real'
 
 try {
-    $resp = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 30 `
-        -UserAgent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EumwonDaily/1.0'
+    # cache-buster + no-cache headers: GitHub's runners were served copies of the page that were hours/days old
+    $resp = Invoke-WebRequest -Uri ($Url + '?_=' + [DateTime]::UtcNow.Ticks) -UseBasicParsing -TimeoutSec 30 `
+        -UserAgent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EumwonDaily/1.0' `
+        -Headers @{ 'Cache-Control' = 'no-cache'; 'Pragma' = 'no-cache' }
     $bytes = New-Object byte[] $resp.RawContentStream.Length
     $resp.RawContentStream.Position = 0
     [void]$resp.RawContentStream.Read($bytes, 0, $bytes.Length)
@@ -26,6 +28,13 @@ $tm = [regex]::Match($html, 'chart-resultDatetime">[^<]*?(\d{4})\.(\d{2})\.(\d{2
 if (-not $tm.Success) { Write-Log 'ERROR aggregation time not found (page layout changed?)'; exit 1 }
 $chartTime = '{0}-{1}-{2}T{3}:{4}:00+09:00' -f $tm.Groups[1].Value, $tm.Groups[2].Value, $tm.Groups[3].Value, $tm.Groups[4].Value, $tm.Groups[5].Value
 $collectedAt = (Get-Date).ToString('yyyy-MM-ddTHH:mm:sszzz')
+# A realtime chart older than 3 hours is a stale cached page, not the current chart: don't store it
+$ageH = ((Get-Date) - [datetime]::ParseExact($chartTime.Substring(0, 16), 'yyyy-MM-ddTHH:mm', $null)).TotalHours
+if ($ageH -gt 3) {
+    Write-Log ("WARN stale realtime page: chart time {0} is {1:N0}h old, not stored" -f $chartTime, $ageH)
+    if (-not $NoBuild) { & (Join-Path $PSScriptRoot 'build-data.ps1') }
+    return
+}
 
 $segments = [regex]::Split($html, 'class="chart-item rank-data') | Select-Object -Skip 1
 $entries = @()
